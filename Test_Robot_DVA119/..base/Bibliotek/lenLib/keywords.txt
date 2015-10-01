@@ -1,0 +1,17 @@
+lenlib	KEYWORD1
+myMotors	KEYWORD1
+beginMotors	KEYWORD2
+angleServo	KEYWORD2
+runMotor	KEYWORD2
+mySensors	KEYWORD1
+beginSensors	KEYWORD2
+setAllSensors 	KEYWORD2
+readReflect0 	KEYWORD2
+readReflect1 	KEYWORD2
+readReflect2 	KEYWORD2
+readReflect3 	KEYWORD2
+readIR0 	KEYWORD2
+readButton0 	KEYWORD2
+readButton1 	KEYWORD2
+readAccX	KEYWORD2
+readAccY	KEYWORD2
