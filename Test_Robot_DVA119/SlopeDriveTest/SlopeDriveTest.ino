@@ -5,7 +5,7 @@
 #include <Servo.h> 
 #include <Wire.h> 
 
-#define C_THIS_VERSION "DVA119 Robotics Intro: Sloap Test v. 2015-10-01/GF"
+#define C_THIS_VERSION "DVA119 Robotics Intro: Slope Test v. 2015-10-01/GF"
 
 myMotors Motors; // Create motors object
 
