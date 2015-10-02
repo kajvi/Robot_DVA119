@@ -11,8 +11,8 @@
 #define C_BLACK_1 1
 #define C_LIGHT_0 0
 
-#define C_MOTOR_LEFT_1 1
-#define C_MOTOR_RIGHT_2 2
+#define C_MOTOR_LEFT_2 2
+#define C_MOTOR_RIGHT_1 1
 
 enum actionEnum {
   aeActionUnknown,
@@ -131,33 +131,33 @@ void loop()
   switch (actionMode)
   {
     case aeActionStill:
-      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, 0);
-      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, 0);   
+      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, 0);
+      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, 0);   
     break;
     
     case aeActionTurnHalfLeft:
-      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_LOW); 
-      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_LOW); 
+      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_MIDDLE);
     break;    
     
     case aeActionTurnFullLeft:
-      Motors.runMotor(C_MOTOR_LEFT_1, BACKWARD, C_SPEED_LOW); 
-      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_LEFT_2, BACKWARD, C_SPEED_LOW); 
+      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_MIDDLE);
     break;
 
      case aeActionTurnHalfRight:
-      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_MIDDLE);
-      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_LOW);  
+      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_LOW);  
     break;
     
     case aeActionTurnFullRight:
-      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_MIDDLE);
-      Motors.runMotor(C_MOTOR_RIGHT_2, BACKWARD, C_SPEED_LOW);  
+      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_RIGHT_1, BACKWARD, C_SPEED_LOW);  
     break;
 
     case aeActionGoForward:
-      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_MIDDLE);
-      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_MIDDLE);
     break;
 
     case aeActionSearch:
