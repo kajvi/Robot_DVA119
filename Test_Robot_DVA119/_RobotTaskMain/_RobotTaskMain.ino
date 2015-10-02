@@ -5,8 +5,13 @@
 #include <Servo.h> 
 #include <Wire.h> 
 #include <SimpleTimer.h>
+#include "TaskBalls.h"
+#include "TaskLabyrinth.h"
+#include "TaskLineFollow.h"
+#include "TaskSlope.h"
 
-#define C_BLACK_1 1
+
+#define C_DARK_1 1
 #define C_LIGHT_0 0
 
 #define C_MOTOR_LEFT_1 1
@@ -29,7 +34,7 @@ enum robotTaskEnum {
   rtLabyrinth,
   rtBalls,
   rtSlope
-}
+};
 
 // Sets state of robot: what is State is the robot in.
 enum robotStateEnum {
@@ -69,20 +74,20 @@ struct engineStruct {
 
 // Keeps track of the robot state and which assignment it is dooing.
 struct robotStateStruct {
-  enum robotStateEnum robotState;
-  int assignment;
+  enum robotTaskEnum task;
+  enum robotStateEnum state;
 };
 
 // Initiate variables.
-enum robotActionEnum robotAction;
+enum actionEnum robotAction;
 struct robotStateStruct robotState;
 struct engineStruct leftEngine;
 struct engineStruct rightEngine;
 
 // Initiate sensors.
-int R0Val_Left = C_Light;
-int R1Val_Center = C_Light;
-int R2Val_Right = C_Light;  // = 0 om ljust, =1 om svart
+int R0Val_Left = C_LIGHT_0;
+int R1Val_Center = C_LIGHT_0;
+int R2Val_Right = C_LIGHT_0;  // = 0 om ljust, =1 om svart
 
 /* int ActionMode; // 0 = stand still, 1 = turn left, 2 = turn right, 3 = go forward, 4 = search
 int LastAction = 0; // 0 = stand still, 1 = turn left, 2 = turn right, 3 = go forward, 4 = search
@@ -94,11 +99,15 @@ float factor = 2.0;
 mySensors Sensors; // create Sensors object
 myMotors Motors;  // create Motors object
 
+
+    
+// ============================================================================================
+
 void setup() 
 { 
   // Initiate robot state and actions.
-  robotState.robotStateEnum = rsStarting;
-  robotState.assignment = C_assignLinefollow;
+  robotState.task = rtLinefollow;
+  robotState.state = rsStarting;
   robotAction = aeActionStill;
   
   Motors.beginMotors();   // start motors
@@ -119,66 +128,107 @@ void loop()
   R2Val_Right  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
 
 
-  // Track which state the robot is in.
-  if(
-  switch(robotState.robotStateEnum)
+  // Determin Which task the robot is preforming
+  switch(robotState.task)
+  {
+    case rtLinefollow:
+    taskLineFollow();
+    break;
+    
+    case rtLabyrinth:
+    taskLabyrinth();
+    break;
+    
+    case rtBalls:
+    taskBalls();
+    break;
+    
+    case rtSlope:
+    taskSlope();
+    break;
+    
+    default:
+    break;
+  }
+
+  switch(robotState.state)
   {
     case rsStarting:
-    if (!((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0)) && !((R0Val_Left == C_LIGHT_1) &&  (R1Val_Center == C_LIGHT_1) && (R2Val_Right == C_LIGHT_1)))
+    if (!((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0)) && !((R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1)))
     {
-      robotState = rsLineFollow;
+      robotState.state = rsLineFollow;
     }
     else
     if ((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0))
     {
-      robotState = rsSearching;
+      robotState.state = rsLineSearch;
     }
     else
     {
-      robotState = nextState;
+    //  robotState.state = nextState;
     }
     break;
 
-    case rsFollowing:
-    if ( (R0Val_Left == C_BLACK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
+
+  // Track which state the robot is in.
+  switch(robotState.state)
+  {
+    case rsStarting:
+    if (!((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0)) && !((R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1)))
+    {
+      robotState.state = rsLineFollow;
+    }
+    else
+    if ((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0))
+    {
+      robotState.state = rsLineSearch;
+    }
+    else
+    {
+    //  robotState.state = nextState;
+    }
+    break;
+
+    case rsLineFollow:
+    if ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
     {
       // black is found only on Left - turn left!
-      leftEngine.direction = dBackward;
+      leftEngine.direction = deBackward;
       leftEngine.speed = C_SPEED_LOW;
-      rightEngine.direction = dForward;
+      rightEngine.direction = deForward;
       rightEngine.speed = C_SPEED_MIDDLE;
       
       
     }
       
-    if( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_BLACK_1) )
+    if( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_DARK_1) )
     {
       // black is found only on Right - turn right!
-      rightEngine.direction = dBackward;
+      rightEngine.direction = deBackward;
       rightEngine.speed = C_SPEED_LOW;
-      leftEngine.direction = dForward;
+      leftEngine.direction = deForward;
       leftEngine.speed = C_SPEED_MIDDLE;
     }
 
 
     if ( 
-        ( (R0Val_Left == C_BLACK_1) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_LIGHT_0) )
+        ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
         ||
-        ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_LIGHT_0) )
+        ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
         ||
-        ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_BLACK_1) )
+        ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
         ||
-        ( (R0Val_Left == C_BLACK_1) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_BLACK_1) )
+        ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
       )
     {
-      leftEngine.direction = dForward;
+      leftEngine.direction = deForward;
       leftEngine.speed = C_SPEED_MIDDLE;
-      rightEngine.direction = dForward;
+      rightEngine.direction = deForward;
       rightEngine.speed = C_SPEED_MIDDLE;
     }    
     break;
 
-    case rsSearching:
+    case rsLineSearch:
     
     break;
 
@@ -191,19 +241,19 @@ void loop()
   } // Switch
 
   // Activate Output
-  if(leftEngine.direction == dBackward)
+  if(leftEngine.direction == deBackward)
   {
     Motors.runMotor(C_MOTOR_LEFT_1, BACKWARD, leftEngine.speed);
   }
-  if(leftEngine.direction == dForward)
+  if(leftEngine.direction == deForward)
   {
     Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, leftEngine.speed);
   }
-  if(rightEngine.direction == dBackward)
+  if(rightEngine.direction == deBackward)
   {
     Motors.runMotor(C_MOTOR_RIGHT_2, BACKWARD, rightEngine.speed);
   }
-  if(rightEngine.direction == dForward)
+  if(rightEngine.direction == deForward)
   {
     Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, rightEngine.speed);
   }
@@ -214,7 +264,7 @@ void loop()
   if ( 
        ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
        ||
-       ( (R0Val_Left == C_BLACK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_BLACK_1) )
+       ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_DARK_1) )
      )
   {
     // No black is found - search for it!
@@ -223,14 +273,14 @@ void loop()
     ActionMode = C_ActionSearch;
   }
 
-  if ( (R0Val_Left == C_BLACK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
+  if ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
   {
     // black is found only on Left - turn left!
     ActionMode = C_ActionTurnLeft;
     searchCounter = 0;
   }
 
-  if( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_BLACK_1) )
+  if( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_DARK_1) )
   {
     // black is found only on Right - turn right!
     ActionMode = C_ActionTurnRight;
@@ -239,13 +289,13 @@ void loop()
 
 
   if ( 
-      ( (R0Val_Left == C_BLACK_1) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_LIGHT_0) )
+      ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
        ||
-      ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_LIGHT_0) )
+      ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
         ||
-      ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_BLACK_1) )
+      ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
        ||
-      ( (R0Val_Left == C_BLACK_1) &&  (R1Val_Center == C_BLACK_1) && (R2Val_Right == C_BLACK_1) )
+      ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
      )
   {
     // Black is found... - go forward!
@@ -346,7 +396,7 @@ void loop()
     break;  
   } // switch 
   */        
+  } 
 } // main
-
 // ============================================================================================
 
