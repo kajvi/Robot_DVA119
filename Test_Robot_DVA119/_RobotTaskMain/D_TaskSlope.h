@@ -1,7 +1,9 @@
 #ifndef TASK_SLOPE_H
 #define TASK_SLOPE_H
 
-void taskSlope(void);
+#include "IO.h"
+
+void taskSlope(struct ioStruct* ptr_io);
 
 
 #endif // TASK_SLOPE_H

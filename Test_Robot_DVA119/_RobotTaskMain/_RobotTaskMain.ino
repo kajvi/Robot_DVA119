@@ -36,22 +36,7 @@ enum robotTaskEnum {
   rtSlope
 };
 
-// Sets state of robot: what is State is the robot in.
-enum robotStateEnum {
-  rsUnknown,
-  rsStarting,
-  rsLineFollow,
-  rsLineSearch,
-  rsBallSearch,
-  rsBallReturn,
-  rsFinnished
-};
 
-// Keeps track of the robot state and which assignment it is dooing.
-struct robotStateStruct {
-  enum robotTaskEnum task;
-  enum robotStateEnum state;
-};
 
 
 mySensors Sensors; // create Sensors object
@@ -59,8 +44,6 @@ myMotors Motors;  // create Motors object
 
 // Declaring Variables.
 static struct ioStruct stat_IO;
-enum actionEnum robotAction;
-struct robotStateStruct robotState;
 
 
     
@@ -70,11 +53,12 @@ void setup()
 { 
   // Initiate IO-struct to start values
   stat_IO.iosMessageChArr[0] = 0;
+  stat_IO.iosDelayMS = 0;
   
   // Initiate robot state and actions.
-  robotState.task = rtLinefollow;
-  robotState.state = rsStarting;
-  robotAction = aeActionStill;
+  // robotState.task = rtLinefollow;
+  // robotState.state = rsStarting;
+  // robotAction = aeActionStill;
   
   Motors.beginMotors();   // start motors
   Sensors.beginSensors(); // start sensors
@@ -96,7 +80,7 @@ void loop()
   stat_IO.iosReflFrontCenter  = Sensors.readReflect1(); // Read digital value of reflect sensor 1
   stat_IO.iosReflFrontRight  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
 
-  
+  /*
   
   // Determin which task the robot is preforming
   switch(robotState.task)
@@ -229,7 +213,6 @@ void loop()
     Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, stat_IO.iosRightEngine.speed);
   }
 
-  /*
   // Evaluate sensor data
   ActionMode = C_ActionStill;
   if ( 
@@ -366,9 +349,10 @@ void loop()
         }
     break;  
   } // switch 
-  */        
+       
   } // switch 
-  
+*/ 
+
   if (stat_IO.iosMessageChArr[0] != 0)
   {
     Serial.println(stat_IO.iosMessageChArr);
