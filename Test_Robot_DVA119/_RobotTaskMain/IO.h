@@ -4,6 +4,10 @@
 // Reserves 200-1 characters for a char.array.
 #define C_MESSAGE_SIZE 200
 
+//= 0 om ljust, =1 om svart
+#define C_DARK_1 1
+#define C_LIGHT_0 0
+
 // Sets action of the robot depending on the state of the robot.
 enum actionEnum {
   aeActionUnknown,

@@ -10,11 +10,9 @@
 
 #define C_THIS_VERSION "Main 2015-10-06"
 
-/* 
-= 0 om ljust, =1 om svart
-#define C_DARK_1 1
-#define C_LIGHT_0 0
 
+
+/* 
 #define C_MOTOR_LEFT_1 1
 #define C_MOTOR_RIGHT_2 2
 

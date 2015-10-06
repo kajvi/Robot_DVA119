@@ -3,9 +3,6 @@
 
 #define C_THIS_TASK "LineFollow 2015-10-06"
 
-// ToDo
-#define C_DARK_1 1
-#define C_LIGHT_0 0
 
 
 // Sets state of robot: what is State is the robot in.
