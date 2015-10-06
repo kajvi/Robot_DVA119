@@ -50,7 +50,7 @@ void setup() {
   pinMode(ledGreenPin, OUTPUT);
   
   //Serial.begin(9600); // set up Serial library at 9600 bps
-  //Serial.println(C_THIS_VERSION);
+  //Serial.println(ledGreenState);
   
   //Sensors.beginSensors(); // start sensors
 

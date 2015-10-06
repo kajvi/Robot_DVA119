@@ -30,12 +30,12 @@
 
 // Sets the Task which the robot is solving.
 enum robotTaskEnum {
+  rtUnknown,
   rtLinefollow,
   rtLabyrinth,
   rtBalls,
   rtSlope
 };
-
 
 mySensors Sensors; // create Sensors object
 myMotors Motors;  // create Motors object
@@ -44,14 +44,30 @@ myMotors Motors;  // create Motors object
 static struct ioStruct stat_IO;
 static enum robotTaskEnum stat_currentTask;
 
+// constants won't change. Used here to set a pin number :
+const int LedRedPin =  12;      // the number of the LED pin
+const int LedGreenPin =  13;
+
+// Variables for timekeeping.
+static unsigned long time;
+static unsigned long targetTime = 0;
+static int checkPoint = 0;
     
 // ============================================================================================
 
 void setup() 
 { 
-  // Initiate IO-struct to start values
+  // Initiate some IO-struct to start values
   stat_IO.iosMessageChArr[0] = 0;
   stat_IO.iosDelayMS = 0;
+  
+  // Sets initial Led output to off : LOW = off : HIGH = on
+  stat_IO.iosLedRed = LOW;             
+  stat_IO.iosLedGreen = LOW;
+
+  // set the digital pin as output:
+  pinMode(LedRedPin, OUTPUT);
+  pinMode(LedGreenPin, OUTPUT);
 
   // Initiate robot Task to the first task: linefollow
   stat_currentTask = rtLinefollow;
@@ -71,7 +87,7 @@ void setup()
 
 void loop() 
 {
-  unsigned long time = millis();
+  time = millis();
   
   // Read all sensors
   stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0

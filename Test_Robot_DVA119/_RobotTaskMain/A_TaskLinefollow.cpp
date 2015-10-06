@@ -39,47 +39,50 @@ void taskLineFollow(struct ioStruct* ptr_io)
 
   // Evaluate sensor data
   // ====================
-  
-  if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
-  {
-    // No black is found - search for it!
-    stat_RobotState = rsBackward;
-  } // if
 
-
+  // black is found on middle and Left - turn a little left!
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    // black is found on middle and Left - turn half left!
     stat_RobotState = rsLeft;
   } // if
-  
+
+
+  // black is found only on Left - turn sharp left!
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    // black is found only on Left - turn full left!
     stat_RobotState = rsSharpLeft;
   } // if
 
 
+  // black is found only on Middle and Right - turn half right!
   if( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
-    // black is found only on Middle and Right - turn half right!
     stat_RobotState = rsRight;
   } // if
-  
+
+
+  // black is found only on Right - turn right!
   if( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
-    // black is found only on Right - turn right!
-    stat_RobotState = rsSharpRight;
+      stat_RobotState = rsSharpRight;
   } // if
 
 
+  // Black is found in middle - go forward!
   if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    // Black is found in middle - go forward!
     stat_RobotState = rsStraight;
   } // if
 
-  
+
+  // No black is found - Back up alittle!
+  if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
+  {
+        stat_RobotState = rsBackward;
+  } // if
+
+
+  // Black is found on all: Different actions depending on state and direction.
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
     // Black is found on all and previous state was forward - Task compleeted!
@@ -87,7 +90,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
     {
       stat_RobotState = rsFinnished;
     }
-
+    
     // Else depending on current state and the previous known direction:
     else
     {
