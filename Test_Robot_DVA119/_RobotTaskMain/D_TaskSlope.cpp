@@ -1,6 +1,9 @@
 #include <string.h>
 #include "D_TaskSlope.h"
 
+#define C_THIS_TASK "Slope 2015-10-06"
+
+
 // Sets state of robot: what is State is the robot in.
 enum robotStateEnum {
   rsUnknown,

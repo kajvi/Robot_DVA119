@@ -81,8 +81,8 @@ void setup()
 
 void loop() 
 {
-  long valAxisX = 0;
-  long valAxisY = 0;
+  int valAxisX = 0;
+  int valAxisY = 0;
 
   int rightMotorSpeed = 50;
   int leftMotorSpeed = 50;
