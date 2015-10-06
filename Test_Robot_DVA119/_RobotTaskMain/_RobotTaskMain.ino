@@ -10,7 +10,8 @@
 
 #define C_THIS_VERSION "Main 2015-10-06"
 
-// = 0 om ljust, =1 om svart
+/* 
+= 0 om ljust, =1 om svart
 #define C_DARK_1 1
 #define C_LIGHT_0 0
 
@@ -27,6 +28,7 @@
 #define C_SPEED_MIDDLE 70
 #define C_SPEED_LOW    50
 #define C_DELAY 30
+*/
 
 // Sets the Task which the robot is solving.
 enum robotTaskEnum {
@@ -37,14 +39,12 @@ enum robotTaskEnum {
 };
 
 
-
-
 mySensors Sensors; // create Sensors object
 myMotors Motors;  // create Motors object
 
 // Declaring Variables.
 static struct ioStruct stat_IO;
-
+static enum robotTaskEnum stat_currentTask;
 
     
 // ============================================================================================
@@ -54,11 +54,9 @@ void setup()
   // Initiate IO-struct to start values
   stat_IO.iosMessageChArr[0] = 0;
   stat_IO.iosDelayMS = 0;
-  
-  // Initiate robot state and actions.
-  // robotState.task = rtLinefollow;
-  // robotState.state = rsStarting;
-  // robotAction = aeActionStill;
+
+  // Initiate robot Task to the first task: linefollow
+  stat_currentTask = rtLinefollow;
   
   Motors.beginMotors();   // start motors
   Sensors.beginSensors(); // start sensors
@@ -80,32 +78,40 @@ void loop()
   stat_IO.iosReflFrontCenter  = Sensors.readReflect1(); // Read digital value of reflect sensor 1
   stat_IO.iosReflFrontRight  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
 
-  /*
+
   
   // Determin which task the robot is preforming
-  switch(robotState.task)
+  switch(stat_currentTask)
   {
     case rtLinefollow:
     {
       taskLineFollow(&stat_IO);
       break;
     }
+    
     case rtLabyrinth:
-    taskLabyrinth();
-    break;
+    {
+      taskLabyrinth(&stat_IO);
+      break;
+    }
     
     case rtBalls:
-    taskBalls();
-    break;
+    {
+      taskBalls(&stat_IO);
+      break;
+    }
     
     case rtSlope:
-    taskSlope();
-    break;
+    {
+      taskSlope(&stat_IO);
+      break;
+    }
     
     default:
     break;
   }
-
+  
+  /*
   switch(robotState.state)
   {
     case rsStarting:
