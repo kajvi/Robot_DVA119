@@ -73,6 +73,8 @@ void setup()
 
 void loop() 
 {
+  unsigned long time = millis();
+  
   // Read all sensors
   stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
   stat_IO.iosReflFrontCenter_1 = Sensors.readReflect1(); // Read digital value of reflect sensor 1
