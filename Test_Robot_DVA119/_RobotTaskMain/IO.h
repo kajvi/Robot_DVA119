@@ -32,9 +32,9 @@ struct engineStruct {
 // struct I/O struct containing all sensor streams (INPUT) and all engine and Diod streams (OUTPUT)
 struct ioStruct {
   // Reflector Streams for LineFollow
-  int iosReflFrontLeft;
-  int iosReflFrontCenter;
-  int iosReflFrontRight;
+  int iosReflFrontLeft_0;
+  int iosReflFrontCenter_1;
+  int iosReflFrontRight_2;
 
   // Accelerometer
   int iosAccelerometerX;

@@ -74,9 +74,9 @@ void setup()
 void loop() 
 {
   // Read all sensors
-  stat_IO.iosReflFrontLeft   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
-  stat_IO.iosReflFrontCenter = Sensors.readReflect1(); // Read digital value of reflect sensor 1
-  stat_IO.iosReflFrontRight  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
+  stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
+  stat_IO.iosReflFrontCenter_1 = Sensors.readReflect1(); // Read digital value of reflect sensor 1
+  stat_IO.iosReflFrontRight_2  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
 
   stat_IO.iosAccelerometerX  = Sensors.readAccX();
   stat_IO.iosAccelerometerY  = Sensors.readAccY();

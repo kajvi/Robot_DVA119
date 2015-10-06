@@ -1,12 +1,16 @@
+#include <String.h>
+
 // ============================================================================
 
-String adjustStr(String i_Str, int i_Width)
+//String adjustStr(String i_Str, int i_Width)
+void dummy()
 {
   // i_Width < 0 - add spaces after i_Str - Left Justify
   // i_Width > 0 - add spaces before i_Str - Right Justify
   // No if i_Str longer that abs(i_Width) - no change!
   
-  String resultStr = i_Str;
+/* String-problem! 
+   String resultStr = i_Str;
   
   if (i_Width > 0)
   {
@@ -26,7 +30,7 @@ String adjustStr(String i_Str, int i_Width)
   } // else
   
   return resultStr;
-   
+ */  
 } // adjustStr
 
 // ============================================================================
