@@ -3,10 +3,10 @@
 #include <Servo.h> 
 #include <Wire.h>
 #include "IO.h" 
-#include "TaskBalls.h"
-#include "TaskLabyrinth.h"
-#include "TaskLineFollow.h"
-#include "TaskSlope.h"
+#include "A_TaskLineFollow.h"
+#include "B_TaskLabyrinth.h"
+#include "C_TaskBalls.h"
+#include "D_TaskSlope.h"
 
 #define C_THIS_VERSION "Main 2015-10-06"
 
