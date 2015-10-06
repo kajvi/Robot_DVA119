@@ -36,6 +36,10 @@ struct ioStruct {
   int iosReflFrontCenter;
   int iosReflFrontRight;
 
+  // Accelerometer
+  int iosAccelerometerX;
+  int iosAccelerometerY;
+
   // Engine Streams
   struct engineStruct iosLeftEngine;
   struct engineStruct iosRightEngine;
