@@ -1,7 +1,7 @@
 
-#define C_THIS_VERSION "DVA119 Robotics Intro: Follow Tape Test v. 2015-10-01/GF"
+#define C_THIS_VERSION "DVA119 Robotics Intro: Follow Tape Test v. 2015-10-06/GF"
 
- ??? OKLART SKALL BYTA MOTOR L/R ???
+
 
 #include <Adafruit_MotorShield.h>
 #include <lenlib.h> 
@@ -11,9 +11,27 @@
 #define C_BLACK_1 1
 #define C_LIGHT_0 0
 
-#define C_MOTOR_LEFT_2 2
-#define C_MOTOR_RIGHT_1 1
+#define C_MOTOR_LEFT_1 1
+#define C_MOTOR_RIGHT_2 2
 
+#define C_SPEED_HIGH   90
+#define C_SPEED_MIDDLE 70
+#define C_SPEED_LOW    50
+#define C_DELAY 30
+
+
+// Sets state of robot: what is State is the robot in.
+enum robotStateEnum {
+  rsUnknown,
+  rsStarting,
+  rsLineFollow,
+  rsLineSearch,
+  rsBallSearch,
+  rsBallReturn,
+  rsFinnished
+};
+
+// Sets action of the robot depending on the state of the robot.
 enum actionEnum {
   aeActionUnknown,
   aeActionStill,
@@ -26,11 +44,9 @@ enum actionEnum {
 };
 
 
-#define C_SPEED_HIGH   120
-#define C_SPEED_MIDDLE 110
-#define C_SPEED_LOW    100
 
-#define C_DELAY 30
+
+
 
 
 mySensors Sensors; // create Sensors object
@@ -131,33 +147,33 @@ void loop()
   switch (actionMode)
   {
     case aeActionStill:
-      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, 0);
-      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, 0);   
+      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, 0);
+      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, 0);   
     break;
     
     case aeActionTurnHalfLeft:
-      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_LOW); 
-      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_LOW); 
+      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_MIDDLE);
     break;    
     
     case aeActionTurnFullLeft:
-      Motors.runMotor(C_MOTOR_LEFT_2, BACKWARD, C_SPEED_LOW); 
-      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_LEFT_1, BACKWARD, C_SPEED_LOW); 
+      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_MIDDLE);
     break;
 
      case aeActionTurnHalfRight:
-      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_MIDDLE);
-      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_LOW);  
+      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_LOW);  
     break;
     
     case aeActionTurnFullRight:
-      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_MIDDLE);
-      Motors.runMotor(C_MOTOR_RIGHT_1, BACKWARD, C_SPEED_LOW);  
+      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_RIGHT_2, BACKWARD, C_SPEED_LOW);  
     break;
 
     case aeActionGoForward:
-      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, C_SPEED_MIDDLE);
-      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, C_SPEED_MIDDLE);
+      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, C_SPEED_MIDDLE);
     break;
 
     case aeActionSearch:
