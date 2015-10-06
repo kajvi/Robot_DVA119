@@ -1,16 +1,17 @@
-
-
+#include <SoftwareSerial.h>
 #include <Adafruit_MotorShield.h>
 #include <lenlib.h> 
 #include <Servo.h> 
-#include <Wire.h> 
-#include <SimpleTimer.h>
+#include <Wire.h>
+#include "IO.h" 
 #include "TaskBalls.h"
 #include "TaskLabyrinth.h"
 #include "TaskLineFollow.h"
 #include "TaskSlope.h"
 
+#define C_THIS_VERSION "Main 2015-10-06"
 
+// = 0 om ljust, =1 om svart
 #define C_DARK_1 1
 #define C_LIGHT_0 0
 
@@ -47,57 +48,20 @@ enum robotStateEnum {
   rsFinnished
 };
 
-// Sets action of the robot depending on the state of the robot.
-enum actionEnum {
-  aeActionUnknown,
-  aeActionStill,
-  aeActionTurnHalfLeft,
-  aeActionTurnFullLeft,
-  aeActionTurnHalfRight,
-  aeActionTurnFullRight,
-  aeActionGoForward,
-  aeActionSearch
-};
-
-// Sets engine directions.
-enum directionEnum {
-  deUnknown,
-  deForward,
-  deBackward
-};
-
-// Engine struct which contains direction and speed of the engine.
-struct engineStruct {
-  enum directionEnum direction;
-  int speed;
-};
-
 // Keeps track of the robot state and which assignment it is dooing.
 struct robotStateStruct {
   enum robotTaskEnum task;
   enum robotStateEnum state;
 };
 
-// Initiate variables.
-enum actionEnum robotAction;
-struct robotStateStruct robotState;
-struct engineStruct leftEngine;
-struct engineStruct rightEngine;
-
-// Initiate sensors.
-int R0Val_Left = C_LIGHT_0;
-int R1Val_Center = C_LIGHT_0;
-int R2Val_Right = C_LIGHT_0;  // = 0 om ljust, =1 om svart
-
-/* int ActionMode; // 0 = stand still, 1 = turn left, 2 = turn right, 3 = go forward, 4 = search
-int LastAction = 0; // 0 = stand still, 1 = turn left, 2 = turn right, 3 = go forward, 4 = search
-
-int searchCounter = 0;
-float factor = 2.0;
-*/
 
 mySensors Sensors; // create Sensors object
 myMotors Motors;  // create Motors object
+
+// Declaring Variables.
+static struct ioStruct stat_IO;
+enum actionEnum robotAction;
+struct robotStateStruct robotState;
 
 
     
@@ -113,6 +77,9 @@ void setup()
   Motors.beginMotors();   // start motors
   Sensors.beginSensors(); // start sensors
 
+  Serial.begin(9600); // set up Serial library at 9600 bps
+  Serial.println(C_THIS_VERSION);
+
   // w8 b4 starting.
   delay(4000);
 } // setup
@@ -123,18 +90,21 @@ void setup()
 void loop() 
 {
   // Read all sensors
-  R0Val_Left  = Sensors.readReflect0(); // Read digital value of reflect sensor 0
-  R1Val_Center  = Sensors.readReflect1(); // Read digital value of reflect sensor 1
-  R2Val_Right  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
+  stat_IO.iosReflFrontLeft  = Sensors.readReflect0(); // Read digital value of reflect sensor 0
+  stat_IO.iosReflFrontCenter  = Sensors.readReflect1(); // Read digital value of reflect sensor 1
+  stat_IO.iosReflFrontRight  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
 
-
+  
+  
   // Determin Which task the robot is preforming
   switch(robotState.task)
   {
     case rtLinefollow:
-    taskLineFollow();
-    break;
-    
+    {
+      int test = taskLineFollow(&stat_IO);
+      Serial.println(test);
+      break;
+    }
     case rtLabyrinth:
     taskLabyrinth();
     break;
@@ -154,12 +124,12 @@ void loop()
   switch(robotState.state)
   {
     case rsStarting:
-    if (!((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0)) && !((R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1)))
+    if (!((stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_LIGHT_0)) && !((stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_DARK_1)))
     {
       robotState.state = rsLineFollow;
     }
     else
-    if ((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0))
+    if ((stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_LIGHT_0))
     {
       robotState.state = rsLineSearch;
     }
@@ -174,12 +144,12 @@ void loop()
   switch(robotState.state)
   {
     case rsStarting:
-    if (!((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0)) && !((R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1)))
+    if (!((stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_LIGHT_0)) && !((stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_DARK_1)))
     {
       robotState.state = rsLineFollow;
     }
     else
-    if ((R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0))
+    if ((stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_LIGHT_0))
     {
       robotState.state = rsLineSearch;
     }
@@ -190,41 +160,41 @@ void loop()
     break;
 
     case rsLineFollow:
-    if ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
+    if ( (stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_LIGHT_0) )
     {
       // black is found only on Left - turn left!
-      leftEngine.direction = deBackward;
-      leftEngine.speed = C_SPEED_LOW;
-      rightEngine.direction = deForward;
-      rightEngine.speed = C_SPEED_MIDDLE;
+      stat_IO.iosLeftEngine.direction = deBackward;
+      stat_IO.iosLeftEngine.speed = C_SPEED_LOW;
+      stat_IO.iosRightEngine.direction = deForward;
+      stat_IO.iosRightEngine.speed = C_SPEED_MIDDLE;
       
       
     }
       
-    if( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_DARK_1) )
+    if( (stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_DARK_1) )
     {
       // black is found only on Right - turn right!
-      rightEngine.direction = deBackward;
-      rightEngine.speed = C_SPEED_LOW;
-      leftEngine.direction = deForward;
-      leftEngine.speed = C_SPEED_MIDDLE;
+      stat_IO.iosRightEngine.direction = deBackward;
+      stat_IO.iosRightEngine.speed = C_SPEED_LOW;
+      stat_IO.iosLeftEngine.direction = deForward;
+      stat_IO.iosLeftEngine.speed = C_SPEED_MIDDLE;
     }
 
 
     if ( 
-        ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
+        ( (stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_LIGHT_0) )
         ||
-        ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
+        ( (stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_LIGHT_0) )
         ||
-        ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
+        ( (stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_DARK_1) )
         ||
-        ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
+        ( (stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_DARK_1) )
       )
     {
-      leftEngine.direction = deForward;
-      leftEngine.speed = C_SPEED_MIDDLE;
-      rightEngine.direction = deForward;
-      rightEngine.speed = C_SPEED_MIDDLE;
+      stat_IO.iosLeftEngine.direction = deForward;
+      stat_IO.iosLeftEngine.speed = C_SPEED_MIDDLE;
+      stat_IO.iosRightEngine.direction = deForward;
+      stat_IO.iosRightEngine.speed = C_SPEED_MIDDLE;
     }    
     break;
 
@@ -241,30 +211,30 @@ void loop()
   } // Switch
 
   // Activate Output
-  if(leftEngine.direction == deBackward)
+  if(stat_IO.iosLeftEngine.direction == deBackward)
   {
-    Motors.runMotor(C_MOTOR_LEFT_1, BACKWARD, leftEngine.speed);
+    Motors.runMotor(C_MOTOR_LEFT_1, BACKWARD, stat_IO.iosLeftEngine.speed);
   }
-  if(leftEngine.direction == deForward)
+  if(stat_IO.iosLeftEngine.direction == deForward)
   {
-    Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, leftEngine.speed);
+    Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, stat_IO.iosLeftEngine.speed);
   }
-  if(rightEngine.direction == deBackward)
+  if(stat_IO.iosRightEngine.direction == deBackward)
   {
-    Motors.runMotor(C_MOTOR_RIGHT_2, BACKWARD, rightEngine.speed);
+    Motors.runMotor(C_MOTOR_RIGHT_2, BACKWARD, stat_IO.iosRightEngine.speed);
   }
-  if(rightEngine.direction == deForward)
+  if(stat_IO.iosRightEngine.direction == deForward)
   {
-    Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, rightEngine.speed);
+    Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, stat_IO.iosRightEngine.speed);
   }
 
   /*
   // Evaluate sensor data
   ActionMode = C_ActionStill;
   if ( 
-       ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
+       ( (stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_LIGHT_0) )
        ||
-       ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_DARK_1) )
+       ( (stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_DARK_1) )
      )
   {
     // No black is found - search for it!
@@ -273,14 +243,14 @@ void loop()
     ActionMode = C_ActionSearch;
   }
 
-  if ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_LIGHT_0) )
+  if ( (stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_LIGHT_0) )
   {
     // black is found only on Left - turn left!
     ActionMode = C_ActionTurnLeft;
     searchCounter = 0;
   }
 
-  if( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_LIGHT_0) && (R2Val_Right == C_DARK_1) )
+  if( (stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_LIGHT_0) && (stat_IO.iosReflFrontRight == C_DARK_1) )
   {
     // black is found only on Right - turn right!
     ActionMode = C_ActionTurnRight;
@@ -289,13 +259,13 @@ void loop()
 
 
   if ( 
-      ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
+      ( (stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_LIGHT_0) )
        ||
-      ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_LIGHT_0) )
+      ( (stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_LIGHT_0) )
         ||
-      ( (R0Val_Left == C_LIGHT_0) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
+      ( (stat_IO.iosReflFrontLeft == C_LIGHT_0) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_DARK_1) )
        ||
-      ( (R0Val_Left == C_DARK_1) &&  (R1Val_Center == C_DARK_1) && (R2Val_Right == C_DARK_1) )
+      ( (stat_IO.iosReflFrontLeft == C_DARK_1) &&  (stat_IO.iosReflFrontCenter == C_DARK_1) && (stat_IO.iosReflFrontRight == C_DARK_1) )
      )
   {
     // Black is found... - go forward!

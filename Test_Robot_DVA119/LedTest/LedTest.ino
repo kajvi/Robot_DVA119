@@ -30,8 +30,8 @@
 myMotors Motors; // Create motors object
 
 // constants won't change. Used here to set a pin number :
-const int ledRedPin =  0;      // the number of the LED pin
-const int ledGreenPin =  1;
+const int ledRedPin =  12;      // the number of the LED pin
+const int ledGreenPin =  13;
 
 // Variables will change :
 int ledRedState = LOW;             // ledState used to set the LED
