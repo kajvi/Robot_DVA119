@@ -1,4 +1,3 @@
-#include <SoftwareSerial.h>
 #include <Adafruit_MotorShield.h>
 #include <lenlib.h> 
 #include <Servo.h> 
@@ -69,6 +68,9 @@ struct robotStateStruct robotState;
 
 void setup() 
 { 
+  // Initiate IO-struct to start values
+  stat_IO.iosMessageChArr[0] = 0;
+  
   // Initiate robot state and actions.
   robotState.task = rtLinefollow;
   robotState.state = rsStarting;
@@ -96,13 +98,12 @@ void loop()
 
   
   
-  // Determin Which task the robot is preforming
+  // Determin which task the robot is preforming
   switch(robotState.task)
   {
     case rtLinefollow:
     {
-      int test = taskLineFollow(&stat_IO);
-      Serial.println(test);
+      taskLineFollow(&stat_IO);
       break;
     }
     case rtLabyrinth:
@@ -366,7 +367,20 @@ void loop()
     break;  
   } // switch 
   */        
-  } 
-} // main
+  } // switch 
+  
+  if (stat_IO.iosMessageChArr[0] != 0)
+  {
+    Serial.println(stat_IO.iosMessageChArr);
+    stat_IO.iosMessageChArr[0] = 0;
+  } // if
+
+  if (stat_IO.iosDelayMS != 0)
+  {
+    delay(stat_IO.iosDelayMS);
+    stat_IO.iosDelayMS = 0;
+  } // if
+
+} // loop
 // ============================================================================================
 

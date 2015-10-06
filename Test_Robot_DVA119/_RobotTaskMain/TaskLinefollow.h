@@ -3,7 +3,7 @@
 
 #include "IO.h" 
 
-int taskLineFollow(struct ioStruct* ptr_io);
+void taskLineFollow(struct ioStruct* ptr_io);
 
 
 #endif // TASK_LINE_FOLLOW_H

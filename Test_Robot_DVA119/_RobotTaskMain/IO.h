@@ -1,6 +1,9 @@
 #ifndef IO_H
 #define IO_H
 
+// Reserves 200-1 characters for a char.array.
+#define C_MESSAGE_SIZE 200
+
 // Sets action of the robot depending on the state of the robot.
 enum actionEnum {
   aeActionUnknown,
@@ -40,6 +43,12 @@ struct ioStruct {
   // Led Streams
   int iosLedGreen;
   int iosLedRed;
+
+  // Message: if not empty displayed by main then set to empty
+  char iosMessageChArr[C_MESSAGE_SIZE];
+
+  // Delay counter: if not zero in Main call delay(iosDelayMS) then set to zero
+  long iosDelayMS;
 };
 
 
