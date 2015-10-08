@@ -32,7 +32,7 @@ enum robotStateEnum {
   rsAveragingAcc,
   rsFinishedAveragingAcc,
   rsStopped,
-  rsFinnished
+  rsFinished
 };
 
 // Possible sub states = directions for the robot at this task
@@ -71,6 +71,7 @@ void taskSlope(struct ioStruct* ptr_io)
       stat_RobotDirection = rdStopped;
       stat_RobotState = rsPrepAveraging;
       ptr_io->iosDelayMS = 100;
+      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
     break;
 
     case rsPrepAveraging:
@@ -80,6 +81,7 @@ void taskSlope(struct ioStruct* ptr_io)
       stat_AverageY = ptr_io->iosAccelerometerY;
       stat_RobotState = rsAveragingAcc;
       ptr_io->iosDelayMS = 10;
+      strcpy (ptr_io->iosMessageChArr, "rsPrepAveraging");
     break;
 
     case rsAveragingAcc:
@@ -96,15 +98,18 @@ void taskSlope(struct ioStruct* ptr_io)
          stat_RobotState = rsFinishedAveragingAcc;
          ptr_io->iosDelayMS = 0; // ToDo: onödig...
       } // else
+      strcpy (ptr_io->iosMessageChArr, "rsAveragingAcc");
     break;
 
     case rsFinishedAveragingAcc:
       stat_RobotState = rsRunning;
       stat_TargetTime = millis() + C_RUN_LENGTH_IN_MS;
+      strcpy (ptr_io->iosMessageChArr, "rsFinishedAveragingAcc");
     break;
 
     case rsRunning:
       // Check if time to do a new measurement of acc.
+      strcpy (ptr_io->iosMessageChArr, "rsRunning");
       if (millis() > stat_TargetTime)
       {
         // Stop motors.
@@ -176,7 +181,8 @@ void taskSlope(struct ioStruct* ptr_io)
     
     break;
 
-    case rsFinnished:
+    case rsFinished:
+       strcpy (ptr_io->iosMessageChArr, "rsFinishedRunning");
        ptr_io->iosCurrentTaskIsFinished = 1; 
     break;
     

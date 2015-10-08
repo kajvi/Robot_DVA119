@@ -87,10 +87,29 @@ void setup()
 
 void loop() 
 {
+  static bool isBreaked = 0;
+  
   time = millis();
+
+// Only run limited time
+if (millis() > 10*1000)
+{
+  if (!isBreaked)
+  {
+     Serial.print(millis());
+     Serial.print(" - ");
+     Serial.println("BREAK");
+  }
+  isBreaked = true;
+} // if
+else
+{
+  
+
   
   // Read all sensors
   // ================
+
   
   stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
   stat_IO.iosReflFrontCenter_1 = Sensors.readReflect1(); // Read digital value of reflect sensor 1
@@ -186,6 +205,8 @@ void loop()
   
   if (stat_IO.iosMessageChArr[0] != 0)
   {
+    Serial.print(millis());
+    Serial.print(" - ");
     Serial.println(stat_IO.iosMessageChArr);
     stat_IO.iosMessageChArr[0] = 0;
   } // if
@@ -196,6 +217,7 @@ void loop()
     stat_IO.iosDelayMS = 0;
   } // if
 
+}
 } // loop
 
 // ============================================================================================

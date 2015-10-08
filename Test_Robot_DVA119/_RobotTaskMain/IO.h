@@ -51,6 +51,7 @@ struct ioStruct {
   int iosAccelerometerX;
   int iosAccelerometerY;
 
+
   // Actuators
   // =========
   
@@ -62,10 +63,13 @@ struct ioStruct {
   int iosLedGreen;
   int iosLedRed;
 
+
   // Status
   // ======
 
-  int iosCurrentTaskIsFinished; // <> 0 if task finished, else = 0 task in progress
+  unsigned long iosElapsedTime;
+  
+  int iosCurrentTaskIsFinished; // <> 0 if task finished, else = 0 if task in progress
   
   // Message: if not empty displayed by main then set to empty
   char iosMessageChArr[C_MESSAGE_SIZE];

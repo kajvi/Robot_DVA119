@@ -1,7 +1,7 @@
 #include <string.h>
 #include "C_TaskBalls.h"
 
-#define C_THIS_TASK "LineFollow 2015-10-06"
+#define C_THIS_TASK "TaskBalls 2015-10-08"
 
 // Sets state of robot: what is State is the robot in.
 enum robotStateEnum {
@@ -22,7 +22,8 @@ static enum robotStateEnum stat_RobotState = rsInitial;
 
 void taskBalls(struct ioStruct* ptr_io)
 {
-
+  strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
+  ptr_io->iosCurrentTaskIsFinished = 1; 
 } // taskBalls
 
 // ============================================================================================

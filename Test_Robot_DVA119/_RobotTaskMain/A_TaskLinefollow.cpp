@@ -73,6 +73,9 @@ static enum actionEnum stat_Action = aeActionUnknown;
 void taskLineFollow(struct ioStruct* ptr_io)
 {
   strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
+  
+  ptr_io->iosCurrentTaskIsFinished = 1;  // STUB test
+  
   // ptr_io->iosDelayMS = 2000;
 
   // Evaluate sensor data
