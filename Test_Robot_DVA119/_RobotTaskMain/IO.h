@@ -17,7 +17,9 @@ enum actionEnum {
   aeActionTurnHalfRight,
   aeActionTurnFullRight,
   aeActionGoForward,
-  aeActionSearch
+  aeActionGoBackward,
+  aeActionSearch,
+  aeFinnished
 };
 
 // Sets engine directions.

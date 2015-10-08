@@ -1,7 +1,9 @@
 #include <string.h>
+#include "IO.h"
+
 #include "A_TaskLineFollow.h"
 
-#define C_THIS_TASK "LineFollow 2015-10-06"
+#define C_THIS_TASK "LineFollow 2015-10-08"
 
 
 
@@ -11,6 +13,7 @@ enum robotStateEnum {
   rsInitial,
   rsStraight1,
   rsStraight2,
+  rsStraight3,
   rsLeft1,
   rsLeft2,
   rsLeft3,
@@ -19,8 +22,8 @@ enum robotStateEnum {
   rsRight3,
   rsBackward1,
   rsBackward2,
-  rsFinnished1
-  rsFinnished2
+  rsFinnished1,
+  rsFinnished2,
   rsFinnished3
 };
 
@@ -32,6 +35,7 @@ enum lastestDirectionEnum {
   ldRight
 };
 
+/* finns i IO.h
 // Sets action of the robot depending on the state of the robot.
 enum actionEnum {
   aeUnknown,
@@ -44,9 +48,24 @@ enum actionEnum {
   aeFinnished
 };
 
+jmf:
+enum actionEnum {
+  aeActionUnknown,
+  aeActionStill,
+  aeActionTurnHalfLeft,
+  aeActionTurnFullLeft,
+  aeActionTurnHalfRight,
+  aeActionTurnFullRight,
+  aeActionGoForward,
+  aeActionGoBackward,
+  aeActionSearch,
+  aeFinnished
+};
+*/
+
 static enum robotStateEnum stat_RobotState = rsInitial;
 static enum lastestDirectionEnum stat_LastestDirection = ldInitial;
-static enum actionEnum stat_Action = aeInitial;
+static enum actionEnum stat_Action = aeActionUnknown;
 
 // ============================================================================================
 
@@ -62,42 +81,42 @@ void taskLineFollow(struct ioStruct* ptr_io)
 // black is found on middle and Left - turn a little left!
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    stat_Action = aeLeft;
+    stat_Action = aeActionTurnHalfLeft;
   } // if
 
 
   // black is found only on Left - turn sharp left!
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    sstat_Action = aeLeft;
+    stat_Action = aeActionTurnFullLeft;
   } // if
 
 
   // black is found only on Middle and Right - turn half right!
   if( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
-    stat_Action = aeRight;
+    stat_Action = aeActionTurnHalfRight;
   } // if
 
 
   // black is found only on Right - turn right!
   if( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
-    stat_Action = aeRight
+    stat_Action = aeActionTurnFullRight;
   } // if
 
 
   // Black is found in middle - go forward!
   if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    stat_Action = aeStraight;
+    stat_Action = aeActionGoForward;
   } // if
 
 
   // No black is found - Back up alittle!
   if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    stat_Action = aeBackward;
+    stat_Action = aeActionGoBackward;
   } // if
 
 
@@ -111,7 +130,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
     // Black is found on Left + Rigth but not on Middle - what to do?!
-    stat_Action = aeStraight;
+    stat_Action = aeActionGoForward;
   } // if
 
   switch (stat_RobotState)
@@ -201,7 +220,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
     }
 
    // Action suggestion Finnished "1 time"
-    case rsFinnished:
+    case rsFinnished1:
     {
       // TO DO!
       break;

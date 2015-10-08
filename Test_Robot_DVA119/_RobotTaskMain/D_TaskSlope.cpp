@@ -4,7 +4,7 @@
 #include "D_TaskSlope.h"
 #include "IO.h"
 
-#define C_THIS_TASK "Slope 2015-10-06"
+#define C_THIS_TASK "Slope 2015-10-08"
 
 #define C_AVERAGING_COUNT 10
 
