@@ -1,10 +1,12 @@
-#include <string.h>
+//#include <string.h>
 #include <arduino.h>  // To get millis() to be defined...
 
 #include "D_TaskSlope.h"
 #include "IO.h"
 
 #define C_THIS_TASK "Slope 2015-10-08"
+
+#define C_RUN_LENGTH_IN_MS 500
 
 #define C_AVERAGING_COUNT 10
 
@@ -68,11 +70,11 @@ void taskSlope(struct ioStruct* ptr_io)
       ptr_io->iosRightEngine.speed = 0;
       stat_RobotDirection = rdStopped;
       stat_RobotState = rsPrepAveraging;
-      ptr_io->iosDelayMS = 50;
+      ptr_io->iosDelayMS = 100;
     break;
 
     case rsPrepAveraging:
-      // Prepare averaging
+      // Prepare averaging - motors stopped when you come here
       stat_AveragingCount = C_AVERAGING_COUNT;
       stat_AverageX = ptr_io->iosAccelerometerX; 
       stat_AverageY = ptr_io->iosAccelerometerY;
@@ -92,65 +94,81 @@ void taskSlope(struct ioStruct* ptr_io)
       else
       {
          stat_RobotState = rsFinishedAveragingAcc;
-         ptr_io->iosDelayMS = 0; // onödig...
+         ptr_io->iosDelayMS = 0; // ToDo: onödig...
       } // else
     break;
 
     case rsFinishedAveragingAcc:
       stat_RobotState = rsRunning;
-      stat_TargetTime = millis();
+      stat_TargetTime = millis() + C_RUN_LENGTH_IN_MS;
     break;
 
-
     case rsRunning:
-      // Sets different speeds on each engine depending on right or left tilt.
-      if (stat_AverageY < C_ACC_FLAT_Y - C_ACC_WINDOW_WIDTH_Y)
+      // Check if time to do a new measurement of acc.
+      if (millis() > stat_TargetTime)
       {
-        // Right Tilt
-        ptr_io->iosRightEngine.speed = C_SPEED_LOW;
-        ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;
+        // Stop motors.
+        ptr_io->iosLeftEngine.speed = 0;
+        ptr_io->iosRightEngine.speed = 0;  
+        ptr_io->iosDelayMS = 100;      
+        stat_RobotState = rsPrepAveraging;
       } // if
       else
       {
-        if (stat_AverageY <= (C_ACC_FLAT_Y + C_ACC_WINDOW_WIDTH_Y))
+        // Sets different speeds on each engine depending on right or left tilt.
+        if (stat_AverageY < (C_ACC_FLAT_Y - C_ACC_WINDOW_WIDTH_Y))
         {
-          // No Tilt
-          ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
-          ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;      
+          // Right Tilt
+          ptr_io->iosRightEngine.speed = C_SPEED_LOW;
+          ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;
         } // if
         else
         {
-          // Left Tilt
-          ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
-          ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
+          // Control according to Y-axis
+          if (stat_AverageY <= (C_ACC_FLAT_Y + C_ACC_WINDOW_WIDTH_Y))
+          {
+            // No Tilt
+            ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
+            ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;      
+          } // if
+          else
+          {
+            // Left Tilt
+            ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
+            ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
+          } // else
         } // else
+
+        // Control according to X-value
+        if (stat_AverageX < (C_ACC_FLAT_X - C_ACC_WINDOW_WIDTH_X))
+        {
+            // Going Right -> Turn left.
+            ptr_io->iosRightEngine.direction = deForward;
+            ptr_io->iosLeftEngine.direction = deForward;
+            ptr_io->iosLeftEngine.speed = 0; 
+        } // if
+        else
+        {
+          if(stat_AverageX <= (C_ACC_FLAT_X + C_ACC_WINDOW_WIDTH_X))
+          {
+              // Going Straight
+              ptr_io->iosRightEngine.direction = deForward; 
+              ptr_io->iosLeftEngine.direction = deForward;
+          } // if
+          else
+          {
+              // Going Left -> Turn Right
+              ptr_io->iosRightEngine.direction = deForward;
+              ptr_io->iosRightEngine.speed = 0;
+              ptr_io->iosLeftEngine.direction = deForward; 
+          } // else
+        } // else
+        
+        ptr_io->iosDelayMS = 10;
+        
       } // else
 
 
-  // Control according to X-value
-  if (stat_AverageX < (C_ACC_FLAT_X - C_ACC_WINDOW_WIDTH_X))
-  {
-      // Going Right -> Turn left.
-      ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosLeftEngine.direction = deForward;
-      ptr_io->iosLeftEngine.speed = 0; 
-  } // if
-  else
-  {
-    if(stat_AverageX <= (C_ACC_FLAT_X + C_ACC_WINDOW_WIDTH_X))
-    {
-      // Going Straight
-      ptr_io->iosRightEngine.direction = deForward; 
-      ptr_io->iosLeftEngine.direction = deForward;
-    } // if
-    else
-    {
-      // Going Left -> Turn Right
-      ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = 0;
-      ptr_io->iosLeftEngine.direction = deForward; 
-    } // else
-  } // else
   
     break;
 
@@ -159,7 +177,7 @@ void taskSlope(struct ioStruct* ptr_io)
     break;
 
     case rsFinnished:
-    
+       ptr_io->iosCurrentTaskIsFinished = 1; 
     break;
     
     default:
