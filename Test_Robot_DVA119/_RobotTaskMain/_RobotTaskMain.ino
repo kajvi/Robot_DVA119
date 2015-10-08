@@ -8,13 +8,13 @@
 #include "C_TaskBalls.h"
 #include "D_TaskSlope.h"
 
-#define C_THIS_VERSION "Main 2015-10-06"
+#define C_THIS_VERSION "Main 2015-10-08"
 
+#define C_MOTOR_LEFT_1 1
+#define C_MOTOR_RIGHT_2 2
 
 
 /* 
-#define C_MOTOR_LEFT_1 1
-#define C_MOTOR_RIGHT_2 2
 
 #define C_ActionStill 0
 #define C_ActionTurnLeft 1
@@ -34,7 +34,8 @@ enum robotTaskEnum {
   rtLinefollow,
   rtLabyrinth,
   rtBalls,
-  rtSlope
+  rtSlope,
+  rtEndSentinel
 };
 
 mySensors Sensors; // create Sensors object
@@ -84,12 +85,13 @@ void setup()
 
 // ============================================================================================
 
-
 void loop() 
 {
   time = millis();
   
   // Read all sensors
+  // ================
+  
   stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
   stat_IO.iosReflFrontCenter_1 = Sensors.readReflect1(); // Read digital value of reflect sensor 1
   stat_IO.iosReflFrontRight_2  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
@@ -97,38 +99,107 @@ void loop()
   stat_IO.iosAccelerometerX  = Sensors.readAccX();
   stat_IO.iosAccelerometerY  = Sensors.readAccY();
 
+  stat_IO.iosLedGreen = 0;
+  stat_IO.iosLedRed = 0;
+  stat_IO.iosCurrentTaskIsFinished = 0;
+
+  // Execute current task.
+  // ====================
   
-  // Determin which task the robot is preforming
+  // Determine which task the robot is preforming
   switch(stat_currentTask)
   {
     case rtLinefollow:
     {
       taskLineFollow(&stat_IO);
+      if (stat_IO.iosCurrentTaskIsFinished != 0)
+      {
+        // Switch to next task if currenttask is finished
+        stat_currentTask = rtLabyrinth;
+      }
       break;
     }
     
     case rtLabyrinth:
     {
       taskLabyrinth(&stat_IO);
+      if (stat_IO.iosCurrentTaskIsFinished != 0)
+      {
+        // Switch to next task if currenttask is finished
+        stat_currentTask = rtBalls;
+      }      
       break;
     }
     
     case rtBalls:
     {
       taskBalls(&stat_IO);
+       if (stat_IO.iosCurrentTaskIsFinished != 0)
+      {
+        // Switch to next task if currenttask is finished
+        stat_currentTask = rtSlope;
+      }    
       break;
     }
     
     case rtSlope:
     {
       taskSlope(&stat_IO);
+      if (stat_IO.iosCurrentTaskIsFinished != 0)
+      {
+        // Switch to next task if currenttask is finished
+        // All tasks finished - ToDo ???terminate??
+        stat_currentTask = rtEndSentinel;
+      }     
       break;
     }
     
     default:
     break;
-  }
+  } // switch
+
+
+  // Do activations.
+  // ==============
+
+  if (stat_IO.iosLeftEngine.direction == deBackward)
+  {
+    Motors.runMotor(C_MOTOR_LEFT_1, BACKWARD, stat_IO.iosLeftEngine.speed);
+  } // if
+  if (stat_IO.iosLeftEngine.direction == deForward)
+  {
+    Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, stat_IO.iosLeftEngine.speed);
+  } // if
+  if (stat_IO.iosRightEngine.direction == deBackward)
+  {
+    Motors.runMotor(C_MOTOR_RIGHT_2, BACKWARD, stat_IO.iosRightEngine.speed);
+  } // if
+  if (stat_IO.iosRightEngine.direction == deForward)
+  {
+    Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, stat_IO.iosRightEngine.speed);
+  } // if
+
+    
+  digitalWrite(LedGreenPin, stat_IO.iosLedGreen);
+  digitalWrite(LedRedPin, stat_IO.iosLedRed);
+ 
   
+  if (stat_IO.iosMessageChArr[0] != 0)
+  {
+    Serial.println(stat_IO.iosMessageChArr);
+    stat_IO.iosMessageChArr[0] = 0;
+  } // if
+
+  if (stat_IO.iosDelayMS != 0)
+  {
+    delay(stat_IO.iosDelayMS);
+    stat_IO.iosDelayMS = 0;
+  } // if
+
+} // loop
+
+// ============================================================================================
+
   /*
   switch(robotState.state)
   {
@@ -377,18 +448,4 @@ void loop()
   } // switch 
 */ 
 
-  if (stat_IO.iosMessageChArr[0] != 0)
-  {
-    Serial.println(stat_IO.iosMessageChArr);
-    stat_IO.iosMessageChArr[0] = 0;
-  } // if
-
-  if (stat_IO.iosDelayMS != 0)
-  {
-    delay(stat_IO.iosDelayMS);
-    stat_IO.iosDelayMS = 0;
-  } // if
-
-} // loop
-// ============================================================================================
 
