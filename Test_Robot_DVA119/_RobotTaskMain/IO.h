@@ -35,8 +35,13 @@ struct engineStruct {
   int speed;
 };
 
+
 // struct I/O struct containing all sensor streams (INPUT) and all engine and Diod streams (OUTPUT)
 struct ioStruct {
+  
+  // Sensors
+  // =======
+  
   // Reflector Streams for LineFollow
   int iosReflFrontLeft_0;
   int iosReflFrontCenter_1;
@@ -46,6 +51,9 @@ struct ioStruct {
   int iosAccelerometerX;
   int iosAccelerometerY;
 
+  // Actuators
+  // =========
+  
   // Engine Streams
   struct engineStruct iosLeftEngine;
   struct engineStruct iosRightEngine;
@@ -54,6 +62,11 @@ struct ioStruct {
   int iosLedGreen;
   int iosLedRed;
 
+  // Status
+  // ======
+
+  int iosCurrentTaskIsFinished; // <> 0 if task finished, else = 0 task in progress
+  
   // Message: if not empty displayed by main then set to empty
   char iosMessageChArr[C_MESSAGE_SIZE];
 
