@@ -1,57 +1,56 @@
 #include <string.h>
+#include <math.h>
 #include "IO.h"
 
 #include "A_TaskLineFollow.h"
 
 #define C_THIS_TASK "LineFollow 2015-10-08"
 
+// Local speed triming for engine stream.
+#define C_SPEED_HIGH 120
+#define C_SPEED_MEDIUM 70
+#define C_SPEED_LOW 50
 
+#define C_STATE_COUNT_LIMIT 200
+#define C_STATE_COUNT_DIVIDER 4
 
 // Sets state of robot: what is State is the robot in.
 enum robotStateEnum {
   rsUnknown,
   rsInitial,
-  rsStraight1,
-  rsStraight2,
-  rsStraight3,
-  rsLeft1,
-  rsLeft2,
-  rsLeft3,
-  rsRight1,
-  rsRight2,
-  rsRight3,
-  rsBackward1,
-  rsBackward2,
-  rsFinnished1,
-  rsFinnished2,
-  rsFinnished3
-};
-
-enum lastestDirectionEnum {
-  ldUnknown,
-  ldInitial,
-  ldStraight,
-  ldLeft,
-  ldRight
+  rsForward,
+  rsLeft,
+  rsRight,
+  rsBackward,
+  rsFinnished,
 };
 
 /*
-// Sets action of the robot depending on the state of the robot.
-enum actionEnum {
-  aeUnknown,
-  aeInitial,
-  aeStill,
-  aeLeft,
-  aeRight,
-  aeForward,
-  aeBackward,
-  aeFinnished
+// Keeps track what state the robot comes from
+enum lastStateEnum {
+  lsUnknown,
+  lsInitial,
+  lsStraight,
+  lsLeft,
+  lsRight,
+  lsBackward,
+  lsFinnished
 };
 */
 
+// Variable that count the number of times a state has been visited:
+long stateCount = 0;
+// Variable that sets an entry condition to switch states.
+int stateEntry = 0;
+
+
+// Variable Speed depending on state count.
+int stateSpeedRight = C_SPEED_MEDIUM;
+int stateSpeedLeft = C_SPEED_MEDIUM;
+
 static enum robotStateEnum stat_RobotState = rsInitial;
-static enum lastestDirectionEnum stat_LastestDirection = ldInitial;
-static enum actionEnum stat_Action = aeUnknown;
+static enum robotStateEnum stat_LastState = rsInitial;
+static enum actionEnum stat_Action = aeInitial;
 
 // ============================================================================================
 
@@ -67,165 +66,176 @@ void taskLineFollow(struct ioStruct* ptr_io)
   // Evaluate sensor data
   // ====================
 
-// black is found on middle and Left - turn a little left!
-  if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
+// black is found on "Middle/Left" or only "Left" - Turn left!
+  if (( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
+      || 
+      ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )) 
   {
-    stat_Action = aeLeft;
+    stat_RobotState = rsLeft;
   } // if
 
 
-  // black is found only on Left - turn sharp left!
-  if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
+  // black is found only on "Middle/Right" or only "right" - turn right!
+  if (( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
+      ||
+      ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )) 
   {
-    stat_Action = aeLeft;
+    stat_RobotState = rsRight;
   } // if
 
 
-  // black is found only on Middle and Right - turn half right!
-  if( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
+  // Black is found in "middle" or "left/right but not middle" - go forward!
+  if (( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0)) 
+      ||
+      ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )) 
   {
-    stat_Action = aeRight;
-  } // if
-
-
-  // black is found only on Right - turn right!
-  if( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
-  {
-    stat_Action = aeRight;
-  } // if
-
-
-  // Black is found in middle - go forward!
-  if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
-  {
-    stat_Action = aeForward;
+    stat_RobotState = rsForward;
   } // if
 
 
   // No black is found - Back up alittle!
   if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
-    stat_Action = aeBackward;
+    stat_RobotState = rsBackward;
   } // if
 
 
   // Black is found on all: Different actions depending on state and direction.
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
-    stat_Action = aeFinnished;
+    stat_RobotState = rsFinnished;
   }
 
+// End of Sensor Data evaluation.
+// ================================================================================================================================================================================================================== //
 
-  if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
+  // Limit State Counter.
+  if (stateCount > C_STATE_COUNT_LIMIT)
   {
-    // Black is found on Left + Rigth but not on Middle - what to do?!
-    stat_Action = aeForward;
-  } // if
+    stateCount = C_STATE_COUNT_LIMIT;
+  }
 
   switch (stat_RobotState)
   {
     // Initial Value : Drive Forward
     case rsInitial:
     {
-      // TO DO!
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = 0;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = 0;
+      
+      stat_RobotState = rsForward;
+      stat_LastState = rsInitial;
+      
       break;
     }
 
-    // Action suggestion straight "1 time"
-    case rsStraight1:
+    // Action suggestion forward
+    case rsForward:
     {
-      // TO DO!
+      if (stat_LastState != rsForward)
+      {
+        stateCount = lround(stateCount/3);
+      }
+
+      // Direction and speed of Right Engine
+      stateSpeedRight = (int) (stateSpeedRight + stateCount)/C_STATE_COUNT_DIVIDER;
+      stateSpeedLeft = stateSpeedRight;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = stateSpeedRight;
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = stateSpeedLeft;
+
+      stat_LastState = rsForward;
+      stateCount++;
+      
       break;
     }
 
-    // Action suggestion straight "2 time"
-    case rsStraight2:
+    // Algorithm for left turn
+    case rsLeft:
     {
-      // TO DO!
+      // Check last state: if(forward) save half of stateCount : else reset stateCount
+      if (stat_LastState != rsLeft)
+      { 
+        stateCount = 0;
+      }
+
+      // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE 
+      stateSpeedRight = stateSpeedRight + (stateCount/C_STATE_COUNT_DIVIDER);
+
+      // 
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = stateSpeedRight;
+
+      // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE
+      stateSpeedLeft = stateSpeedLeft - 5 * (stateCount/C_STATE_COUNT_DIVIDER);
+
+      //Check sign of StateSpeedLeft and 
+      if (stateSpeedLeft < 30)
+      {
+        stateSpeedLeft = 30;
+      }
+      else
+      {
+        if ( stateSpeedLeft < 0)
+        {
+          stateSpeedLeft = 0;
+        } // if
+        else
+        {
+          if (stateSpeedLeft < -30)
+          {
+            stateSpeedLeft = fabs(stateSpeedLeft);
+            ptr_io->iosLeftEngine.direction = deBackward;            
+          } // if
+        } // else
+      } // else
+
+      // Check that the backward speed does not exceed C_SPEED_HIGH
+      if (stateSpeedLeft > C_SPEED_HIGH)
+      {
+        stateSpeedLeft = C_SPEED_HIGH;
+      }  // if 
+            
+      ptr_io->iosLeftEngine.speed = stateSpeedLeft;
+                  
+      stat_LastState = rsLeft;
+      stateCount++;
+      
       break;
     }
 
-    // Action suggestion straight "3 time"
-    case rsStraight3:
+
+    // Action suggestion Right
+    case rsRight:
     {
-      // TO DO!
+      
+
+      stat_LastState = rsRight;
+      stateCount++;
+      
       break;
     }
-
-    // Action suggestion Left "1 time"
-    case rsLeft1:
+  
+    // Action suggestion Backward
+    case rsBackward:
     {
-      // TO DO!
-      break;
-    }
-
-    // Action suggestion Left "2 time"
-    case rsLeft2:
-    {
-      // TO DO!
+      
+      stat_LastState = rsBackward;
+      stateCount++;
+      
       break;
     }
     
-    // Action suggestion Left "3 time"
-    case rsLeft3:
+   // Action suggestion Finnished
+    case rsFinnished:
     {
-      // TO DO!
-      break;
-    }
-
-    // Action suggestion Right "1 time"
-    case rsRight1:
-    {
-      // TO DO!
-      break;
-    }
-    
-    // Action suggestion Right "2 time"
-    case rsRight2:
-    {
-      // TO DO!
-      break;
-    }
-    
-    // Action suggestion Right "3 time"
-    case rsRight3:
-    {
-      // TO DO!
-      break;
-    }
-
-    // Action suggestion Backward1 "1 time"
-    case rsBackward1:
-    {
-      // TO DO!
-      break;
-    }
-    
-    // Action suggestion Backward2 "2 time"
-    case rsBackward2:
-    {
-      // TO DO!
-      break;
-    }
-
-   // Action suggestion Finnished "1 time"
-    case rsFinnished1:
-    {
-      // TO DO!
-      break;
-    }
-
-    // Action suggestion Finnished "2 time"
-    case rsFinnished2:
-    {
-      // TO DO!
-      break;
-    }
-    
-    // Action suggestion Finnished "3 time"
-    case rsFinnished3:
-    {
-      // TO DO!
+      
+      stat_LastState = rsFinnished;
+      stateCount++;
+      
       break;
     }
     
