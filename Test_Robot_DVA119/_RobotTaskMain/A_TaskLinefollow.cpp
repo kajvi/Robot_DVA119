@@ -35,7 +35,7 @@ enum lastestDirectionEnum {
   ldRight
 };
 
-
+/*
 // Sets action of the robot depending on the state of the robot.
 enum actionEnum {
   aeUnknown,
@@ -47,7 +47,7 @@ enum actionEnum {
   aeBackward,
   aeFinnished
 };
-
+*/
 
 static enum robotStateEnum stat_RobotState = rsInitial;
 static enum lastestDirectionEnum stat_LastestDirection = ldInitial;
