@@ -106,8 +106,6 @@ void loop()
     stat_IO.iosAccelerometerX  = Sensors.readAccX();
     stat_IO.iosAccelerometerY  = Sensors.readAccY();
 
-    stat_IO.iosLedGreen = 0;
-    stat_IO.iosLedRed = 0;
     stat_IO.iosCurrentTaskIsFinished = 0;
 
     // Execute current task.
@@ -189,7 +187,8 @@ void loop()
     
     digitalWrite(LedGreenPin, stat_IO.iosLedGreen);
     digitalWrite(LedRedPin, stat_IO.iosLedRed);
- 
+    stat_IO.iosLedRed = LOW;             
+    stat_IO.iosLedGreen = LOW;
   
     if (stat_IO.iosMessageChArr[0] != 0)
     {
