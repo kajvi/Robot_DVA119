@@ -10,15 +10,13 @@
 
 // Sets action of the robot depending on the state of the robot.
 enum actionEnum {
-  aeActionUnknown,
-  aeActionStill,
-  aeActionTurnHalfLeft,
-  aeActionTurnFullLeft,
-  aeActionTurnHalfRight,
-  aeActionTurnFullRight,
-  aeActionGoForward,
-  aeActionGoBackward,
-  aeActionSearch,
+  aeUnknown,
+  aeInitial,
+  aeStill,
+  aeLeft,
+  aeRight,
+  aeForward,
+  aeBackward,
   aeFinnished
 };
 
