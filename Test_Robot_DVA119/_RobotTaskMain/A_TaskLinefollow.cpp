@@ -11,8 +11,10 @@
 #define C_SPEED_MEDIUM 70
 #define C_SPEED_LOW 50
 
+// Scaling konstant for the acceleration
 #define C_STATE_COUNT_LIMIT 200
 #define C_STATE_COUNT_DIVIDER 4
+#define C_STATE_ENTRY_LIMITER 10
 
 // Sets state of robot: what is State is the robot in.
 enum robotStateEnum {
@@ -44,13 +46,13 @@ long stateCount = 0;
 int stateEntry = 0;
 
 
-// Variable Speed depending on state count.
+// Variable Speed depending on state count : INITIATED TO MEDIUM.
 int stateSpeedRight = C_SPEED_MEDIUM;
 int stateSpeedLeft = C_SPEED_MEDIUM;
 
 static enum robotStateEnum stat_RobotState = rsInitial;
 static enum robotStateEnum stat_LastState = rsInitial;
-static enum actionEnum stat_Action = aeInitial;
+//static enum actionEnum stat_Action = aeInitial;
 
 // ============================================================================================
 
@@ -137,84 +139,150 @@ void taskLineFollow(struct ioStruct* ptr_io)
       if (stat_LastState != rsForward)
       {
         stateCount = lround(stateCount/3);
+        stateEntry = 0;
       }
+        
+      if (stateEntry < C_STATE_ENTRY_LIMITER)
+      {
+        // Direction and speed of Right Engine
+        stateSpeedRight = (int) (stateSpeedRight + stateCount)/C_STATE_COUNT_DIVIDER;
+        stateSpeedLeft = stateSpeedRight;
+        ptr_io->iosRightEngine.direction = deForward;
+        ptr_io->iosRightEngine.speed = stateSpeedRight;
+        ptr_io->iosLeftEngine.direction = deForward;
+        ptr_io->iosLeftEngine.speed = stateSpeedLeft;
 
-      // Direction and speed of Right Engine
-      stateSpeedRight = (int) (stateSpeedRight + stateCount)/C_STATE_COUNT_DIVIDER;
-      stateSpeedLeft = stateSpeedRight;
-      ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = stateSpeedRight;
-      ptr_io->iosLeftEngine.direction = deForward;
-      ptr_io->iosLeftEngine.speed = stateSpeedLeft;
-
-      stat_LastState = rsForward;
-      stateCount++;
-      
+        stat_LastState = rsForward;
+        stateCount++;
+      }
+      else
+      {
+        stateEntry++;
+      }
       break;
     }
 
     // Algorithm for left turn
     case rsLeft:
     {
-      // Check last state: if(forward) save half of stateCount : else reset stateCount
+      // Check last state: if not left : reset stateCount
       if (stat_LastState != rsLeft)
       { 
         stateCount = 0;
+        stateEntry = 0;
       }
 
-      // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE 
-      stateSpeedRight = stateSpeedRight + (stateCount/C_STATE_COUNT_DIVIDER);
-
-      // 
-      ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = stateSpeedRight;
-
-      // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE
-      stateSpeedLeft = stateSpeedLeft - 5 * (stateCount/C_STATE_COUNT_DIVIDER);
-
-      //Check sign of StateSpeedLeft and 
-      if (stateSpeedLeft < 30)
+      if (stateEntry < C_STATE_ENTRY_LIMITER)
       {
-        stateSpeedLeft = 30;
-      }
-      else
-      {
-        if ( stateSpeedLeft < 0)
+        // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE 
+        stateSpeedRight = stateSpeedRight + (stateCount/C_STATE_COUNT_DIVIDER);
+
+        // 
+        ptr_io->iosRightEngine.direction = deForward;
+        ptr_io->iosRightEngine.speed = stateSpeedRight;
+
+        // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE
+        stateSpeedLeft = stateSpeedLeft - 5 * (stateCount/C_STATE_COUNT_DIVIDER);
+
+        //Check sign of StateSpeedLeft and ignore intervall where engine output is to low to generate torque. 
+        if (stateSpeedLeft < 40)
         {
-          stateSpeedLeft = 0;
-        } // if
+          stateSpeedLeft = 40;
+        }
         else
         {
-          if (stateSpeedLeft < -30)
+          if ( stateSpeedLeft < 0)
           {
-            stateSpeedLeft = fabs(stateSpeedLeft);
-            ptr_io->iosLeftEngine.direction = deBackward;            
+            stateSpeedLeft = 0;
           } // if
+          else
+          {
+            if (stateSpeedLeft < -40)
+            {
+              stateSpeedLeft = fabs(stateSpeedLeft);
+              ptr_io->iosLeftEngine.direction = deBackward;            
+            } // if
+          } // else
         } // else
-      } // else
 
-      // Check that the backward speed does not exceed C_SPEED_HIGH
-      if (stateSpeedLeft > C_SPEED_HIGH)
-      {
-        stateSpeedLeft = C_SPEED_HIGH;
-      }  // if 
+        // Check that the backward speed does not exceed C_SPEED_HIGH
+        if (stateSpeedLeft > C_SPEED_HIGH)
+        {
+          stateSpeedLeft = C_SPEED_HIGH;
+        }  // if 
             
-      ptr_io->iosLeftEngine.speed = stateSpeedLeft;
+        ptr_io->iosLeftEngine.speed = stateSpeedLeft;
                   
-      stat_LastState = rsLeft;
-      stateCount++;
+        stat_LastState = rsLeft;
+        stateCount++;
+      } // if
+      else
+      {
+        stateEntry++;
+      } // else
       
       break;
     }
 
 
-    // Action suggestion Right
+    // Algorithm suggestion Right
     case rsRight:
     {
-      
+      // Check last state: if not left : reset stateCount
+      if (stat_LastState != rsRight)
+      { 
+        stateCount = 0;
+        stateEntry = 0;
+      }
 
-      stat_LastState = rsRight;
-      stateCount++;
+      if (stateEntry < C_STATE_ENTRY_LIMITER)
+      {
+        // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE 
+        stateSpeedLeft = stateSpeedLeft + (stateCount/C_STATE_COUNT_DIVIDER);
+
+        // 
+        ptr_io->iosLeftEngine.direction = deForward;
+        ptr_io->iosLeftEngine.speed = stateSpeedLeft;
+
+        // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE
+        stateSpeedRight = stateSpeedRight - 5 * (stateCount/C_STATE_COUNT_DIVIDER);
+
+        //Check sign of StateSpeedLeft and ignore intervall where engine output is to low to generate torque. 
+        if (stateSpeedRight < 40)
+        {
+          stateSpeedRight = 40;
+        }
+        else
+        {
+          if ( stateSpeedRight < 0)
+          {
+            stateSpeedRight = 0;
+          } // if
+          else
+          {
+            if (stateSpeedRight < -40)
+            {
+              stateSpeedRight = fabs(stateSpeedRight);
+              ptr_io->iosRightEngine.direction = deBackward;            
+            } // if
+          } // else
+        } // else
+
+        // Check that the backward speed does not exceed C_SPEED_HIGH
+        if (stateSpeedRight > C_SPEED_HIGH)
+        {
+          stateSpeedRight = C_SPEED_HIGH;
+        }  // if 
+            
+        ptr_io->iosRightEngine.speed = stateSpeedRight;
+                  
+        stat_LastState = rsRight;
+        stateCount++;
+      }
+      else
+      {
+        stateEntry++;
+      } // else
       
       break;
     }

@@ -8,6 +8,7 @@
 #define C_DARK_1 1
 #define C_LIGHT_0 0
 
+/*
 // Sets action of the robot depending on the state of the robot.
 enum actionEnum {
   aeUnknown,
@@ -19,6 +20,7 @@ enum actionEnum {
   aeBackward,
   aeFinnished
 };
+*/
 
 // Sets engine directions.
 enum directionEnum {
