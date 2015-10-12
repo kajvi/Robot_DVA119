@@ -11,10 +11,13 @@
 #define C_SPEED_MEDIUM 70
 #define C_SPEED_LOW 50
 
-// Scaling konstant for the acceleration
+// Local scaling konstants for the sensitivity and acceleration of the guidance system.
 #define C_STATE_COUNT_LIMIT 200
 #define C_STATE_COUNT_DIVIDER 4
 #define C_STATE_ENTRY_LIMITER 10
+#define C_SATE_ENGINE_FACTOR 0.85  // TO DO! adjust the engine that has lower tourqe
+
+
 
 // Sets state of robot: what is State is the robot in.
 enum robotStateEnum {
@@ -27,18 +30,6 @@ enum robotStateEnum {
   rsFinnished,
 };
 
-/*
-// Keeps track what state the robot comes from
-enum lastStateEnum {
-  lsUnknown,
-  lsInitial,
-  lsStraight,
-  lsLeft,
-  lsRight,
-  lsBackward,
-  lsFinnished
-};
-*/
 
 // Variable that count the number of times a state has been visited:
 long stateCount = 0;
@@ -50,9 +41,10 @@ int stateEntry = 0;
 int stateSpeedRight = C_SPEED_MEDIUM;
 int stateSpeedLeft = C_SPEED_MEDIUM;
 
+// StateMachine
 static enum robotStateEnum stat_RobotState = rsInitial;
 static enum robotStateEnum stat_LastState = rsInitial;
-//static enum actionEnum stat_Action = aeInitial;
+
 
 // ============================================================================================
 
@@ -66,7 +58,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
   // ptr_io->iosDelayMS = 2000;
 
   // Evaluate sensor data
-  // ====================
+  // ================================================================================================================================================== //
 
 // black is found on "Middle/Left" or only "Left" - Turn left!
   if (( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
@@ -109,7 +101,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
   }
 
 // End of Sensor Data evaluation.
-// ================================================================================================================================================================================================================== //
+// ====================================================================================================================================================== //
 
   // Limit State Counter.
   if (stateCount > C_STATE_COUNT_LIMIT)
@@ -136,6 +128,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
     // Action suggestion forward
     case rsForward:
     {
+      // Check last state: if not FWRD : reset stateCount and stateEntry
       if (stat_LastState != rsForward)
       {
         stateCount = lround(stateCount/3);
@@ -165,7 +158,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
     // Algorithm for left turn
     case rsLeft:
     {
-      // Check last state: if not left : reset stateCount
+      // Check last state: if not left : reset stateCount and stateEntry
       if (stat_LastState != rsLeft)
       { 
         stateCount = 0;
@@ -228,7 +221,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
     // Algorithm suggestion Right
     case rsRight:
     {
-      // Check last state: if not left : reset stateCount
+      // Check last state: if not Right : reset stateCount and stateEntry
       if (stat_LastState != rsRight)
       { 
         stateCount = 0;
