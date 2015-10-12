@@ -109,9 +109,11 @@ void taskLineFollow(struct ioStruct* ptr_io)
     stateCount = C_STATE_COUNT_LIMIT;
   }
 
+
+  // Guidance system of linefollow!
   switch (stat_RobotState)
   {
-    // Initial Value : Drive Forward
+    // Initial Value : Move on to Forward State
     case rsInitial:
     {
       ptr_io->iosLeftEngine.direction = deForward;
