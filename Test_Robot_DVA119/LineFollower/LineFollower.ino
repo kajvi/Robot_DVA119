@@ -6,10 +6,10 @@
 #include <Wire.h> 
 #include <SimpleTimer.h>
 
-#define C_TaskLinefollow = 0;
-#define C_TaskLabyrinth = 1;
-#define C_TaskBalls = 2;
-#define C_TaskSlope = 3;
+#define C_TaskLinefollow = 0
+#define C_TaskLabyrinth = 1
+#define C_TaskBalls = 2
+#define C_TaskSlope = 3
 
 #define C_BLACK_1 1
 #define C_LIGHT_0 0
@@ -71,15 +71,15 @@ struct robotStateStruct {
 };
 
 // Initiate variables.
-enum robotActionEnum robotAction;
+enum actionEnum robotAction;
 struct robotStateStruct robotState;
 struct engineStruct leftEngine;
 struct engineStruct rightEngine;
 
 // Initiate sensors.
-int R0Val_Left = C_Light;
-int R1Val_Center = C_Light;
-int R2Val_Right = C_Light;  // = 0 om ljust, =1 om svart
+int R0Val_Left = C_LIGHT_0;
+int R1Val_Center = C_LIGHT_0;
+int R2Val_Right = C_LIGHT_0;  // = 0 om ljust, =1 om svart
 
 /* int ActionMode; // 0 = stand still, 1 = turn left, 2 = turn right, 3 = go forward, 4 = search
 int LastAction = 0; // 0 = stand still, 1 = turn left, 2 = turn right, 3 = go forward, 4 = search
@@ -94,8 +94,8 @@ myMotors Motors;  // create Motors object
 void setup() 
 { 
   // Initiate robot state and actions.
-  robotState.robotStateEnum = rsStarting;
-  robotState.assignment = C_assignLinefollow;
+  robotState.robotState = rsStarting;
+  robotState.assignment = C_TaskLinefollow;
   robotAction = aeActionStill;
   
   Motors.beginMotors();   // start motors

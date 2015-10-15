@@ -1,4 +1,4 @@
-
+// 2015-10-15 - Provad OK med täta sensorer
 
 #include <Adafruit_MotorShield.h>
 #include <lenlib.h> 

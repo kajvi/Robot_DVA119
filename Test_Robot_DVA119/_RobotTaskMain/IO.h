@@ -60,6 +60,7 @@ struct ioStruct {
   
   // Message: if not empty displayed by main then set to empty
   char iosMessageChArr[C_MESSAGE_SIZE];
+  int iosMessageInteger = -1;
 
   // Delay counter: if not zero in Main call delay(iosDelayMS) then set to zero
   long iosDelayMS;

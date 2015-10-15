@@ -13,6 +13,7 @@
 #define C_MOTOR_LEFT_1 1
 #define C_MOTOR_RIGHT_2 2
 
+//#define C_DEBUG_PRINT_ON
 
 // Sets the Task which the robot is solving.
 enum robotTaskEnum {
@@ -36,7 +37,6 @@ const int LedRedPin =  12;      // the number of the LED pin
 const int LedGreenPin =  13;
 
 // Variables for timekeeping.
-static unsigned long time;
 static unsigned long targetTime = 0;
 static int checkPoint = 0;
     
@@ -66,7 +66,7 @@ void setup()
   Serial.println(C_THIS_VERSION);
 
   // w8 b4 starting.
-  delay(4000);
+  delay(2500);
 } // setup
 
 // ============================================================================================
@@ -74,9 +74,13 @@ void setup()
 void loop() 
 {
   static bool isBreaked = 0;
-  
-  time = millis();
+#ifdef C_DEBUG_PRINT_ON
 
+  Serial.print(millis());
+  Serial.print(" - ");
+#endif
+
+/*  
   // Only run limited time
   if (millis() > 10*1000)
   {
@@ -90,7 +94,7 @@ void loop()
   } // if
 
   else
-
+*/
   {
   
 
@@ -189,7 +193,8 @@ void loop()
     digitalWrite(LedRedPin, stat_IO.iosLedRed);
     stat_IO.iosLedRed = LOW;             
     stat_IO.iosLedGreen = LOW;
-  
+
+#ifdef C_DEBUG_PRINT_ON
     if (stat_IO.iosMessageChArr[0] != 0)
     {
       Serial.print(millis());
@@ -197,6 +202,15 @@ void loop()
       Serial.println(stat_IO.iosMessageChArr);
       stat_IO.iosMessageChArr[0] = 0;
     } // if
+
+    if (stat_IO.iosMessageInteger != -1)
+    {
+      Serial.print(millis());
+      Serial.print(" - ");
+      Serial.println(stat_IO.iosMessageInteger);
+      stat_IO.iosMessageInteger = -1;
+    } // if
+#endif
 
     if (stat_IO.iosDelayMS != 0)
     {
