@@ -1,3 +1,18 @@
+// _RobotTaskMain.cpp
+//
+// Main program that reads sensors, handles subtask, writes to actuators.
+// 
+// DVA119 -  Introduktion till robotik, ht'15, MdH
+//
+// Authors:
+// Daniel Stenekap, Göran Forsström
+//
+// History
+// 2015-10-16   Introduced
+//
+//
+// ============================================================================
+
 #include <Adafruit_MotorShield.h>
 #include <lenlib.h> 
 #include <Servo.h> 
@@ -8,11 +23,12 @@
 #include "C_TaskBalls.h"
 #include "D_TaskSlope.h"
 
-#define C_THIS_VERSION "Main 2015-10-08"
+#define C_THIS_VERSION "Main 2015-10-16"
 
 #define C_MOTOR_LEFT_1 1
 #define C_MOTOR_RIGHT_2 2
 
+// If the line below not inside a comment, then debug printouts are made on the serial port.
 //#define C_DEBUG_PRINT_ON
 
 // Sets the Task which the robot is solving.

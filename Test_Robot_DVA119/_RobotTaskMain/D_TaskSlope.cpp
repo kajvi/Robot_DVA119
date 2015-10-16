@@ -1,10 +1,24 @@
-//#include <string.h>
+// D_TaskSlope.cpp
+//
+// Handle task going on a slope
+// 
+// DVA119 -  Introduktion till robotik, ht'15, MdH
+//
+// Authors:
+// Daniel Stenekap, Göran Forsström
+//
+// History
+// 2015-10-16   Introduced
+//
+//
+// ============================================================================
+
 #include <arduino.h>  // To get millis() to be defined...
 
 #include "D_TaskSlope.h"
 #include "IO.h"
 
-#define C_THIS_TASK "Slope 2015-10-08"
+#define C_THIS_TASK "Slope 2015-10-16"
 
 #define C_RUN_LENGTH_IN_MS 500
 

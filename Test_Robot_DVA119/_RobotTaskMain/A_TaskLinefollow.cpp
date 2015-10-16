@@ -1,10 +1,25 @@
+// A_TaskLineFollow.cpp
+//
+// Handle task following a black tape.
+// 
+// DVA119 -  Introduktion till robotik, ht'15, MdH
+//
+// Authors:
+// Daniel Stenekap, Göran Forsström
+//
+// History
+// 2015-10-16   Introduced
+//
+//
+// ============================================================================
+
 #include <string.h>
 #include <math.h>
 #include "IO.h"
 
 #include "A_TaskLineFollow.h"
 
-#define C_THIS_TASK "LineFollow 2015-10-15"
+#define C_THIS_TASK "LineFollow 2015-10-16"
 
 // Local speed triming for engine stream.
 #define C_SPEED_HIGH 120
