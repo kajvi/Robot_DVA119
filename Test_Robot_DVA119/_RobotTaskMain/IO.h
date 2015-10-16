@@ -1,7 +1,23 @@
+// IO.h
+//
+// Common data types between main and the different task modules.
+// 
+// DVA119 -  Introduktion till robotik, ht'15, MdH
+//
+// Authors:
+// Daniel Stenekap, Göran Forsström
+//
+// History
+// 2015-10-16   Introduced
+//
+//
+// ============================================================================
+
+
 #ifndef IO_H
 #define IO_H
 
-// Reserves 200-1 characters for a char.array.
+// Reserves 200 characters for a char.array.
 #define C_MESSAGE_SIZE 200
 
 //= 0 om ljust, =1 om svart
@@ -23,7 +39,8 @@ struct engineStruct {
 };
 
 
-// struct I/O struct containing all sensor streams (INPUT) and all engine and Diod streams (OUTPUT)
+// struct I/O struct containing all sensor streams (INPUT) and all activators (engines and Led etc) streams (OUTPUT)
+
 struct ioStruct {
   
   // Sensors

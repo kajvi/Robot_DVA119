@@ -5,8 +5,7 @@
 // DVA119 -  Introduktion till robotik, ht'15, MdH
 //
 // Authors:
-// Daniel
-// Göran Forsström
+// Daniel Stenekap, Göran Forsström
 //
 // History
 // 2015-10-16   Introduced
