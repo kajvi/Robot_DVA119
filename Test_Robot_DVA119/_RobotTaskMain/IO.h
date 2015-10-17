@@ -24,6 +24,28 @@
 #define C_DARK_1 1
 #define C_LIGHT_0 0
 
+// Decoded front senors: Left Center, Right
+enum frontLCRsensorsEnum {
+  dfsUnknown,
+  
+  dfs_LCR_DarkDarkDark,
+  dfs_LCR_DarkDarkLight,
+  dfs_LCR_DarkLightDark,
+  dfs_LCR_DarkLightLight,
+
+  dfs_LCR_LightDarkDark,
+  dfs_LCR_LightDarkLight,
+  dfs_LCR_LightLightDark,
+  dfs_LCR_LightLightLight
+};
+
+// Possible commands to turn robot
+enum directionCommandEnum {
+    dceUnknown,
+    dceTurnLeft,
+    dceGoStraight,
+    dceTurnRight
+};
 
 // Sets engine directions.
 enum directionEnum {

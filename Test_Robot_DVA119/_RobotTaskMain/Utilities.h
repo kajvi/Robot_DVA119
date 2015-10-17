@@ -18,7 +18,9 @@
 #define UTILITIES_H
 
 #include <Arduino.h>
+#include "IO.h"
 
 String adjustStr(String i_Str, int i_Width);
+frontLCRsensorsEnum decodeFrontLCRsensors(struct ioStruct* ptr_io);
 
 #endif // UTILITIES_H

@@ -47,3 +47,15 @@ String adjustStr(String i_Str, int i_Width)
 } // adjustStr
 
 // ============================================================================
+
+frontLCRsensorsEnum decodeFrontLCRsensors(struct ioStruct* ptr_io)
+{
+  int tmp;
+  
+  tmp = (ptr_io->iosReflFrontLeft_0 << 2) || (ptr_io->iosReflFrontCenter_1 << 1) || (ptr_io->iosReflFrontRight_2);
+  return (frontLCRsensorsEnum) (!tmp + 1); // 0 = dfsUnknown, 1 = dfs_LCR_DarkDarkDark, Dark = 1, Light = 0!
+  
+} // decodeFrontLCRsensors
+
+// ============================================================================
+
