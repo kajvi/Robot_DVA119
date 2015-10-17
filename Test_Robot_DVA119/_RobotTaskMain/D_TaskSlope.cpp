@@ -14,11 +14,12 @@
 // ============================================================================
 
 #include <arduino.h>  // To get millis() to be defined...
+#include "Utilities.h"
 
 #include "D_TaskSlope.h"
 #include "IO.h"
 
-#define C_THIS_TASK "Slope 2015-10-16"
+#define C_THIS_TASK "Slope 2015-10-17"
 
 #define C_RUN_LENGTH_IN_MS 500
 
@@ -32,16 +33,16 @@
 #define C_ACC_WINDOW_WIDTH_X 1
 #define C_ACC_WINDOW_WIDTH_Y 2
 
-#define C_SPEED_HIGH 100
-#define C_SPEED_MEDIUM 80
-#define C_SPEED_LOW 60
+#define C_SPEED_HIGH   90
+#define C_SPEED_MIDDLE 70
+#define C_SPEED_LOW    50
 
- 
 // Possible main states for the robot at this task
 enum robotStateEnum {
   rsUnknown,
   rsInitial,
-  rsRunning,
+  rsFollowingFirstTape,
+  rsRunningWithoutTape,
   rsPrepAveraging,
   rsAveragingAcc,
   rsFinishedAveragingAcc,
@@ -50,6 +51,7 @@ enum robotStateEnum {
 };
 
 // Possible sub states = directions for the robot at this task
+/* not used???
 enum robotDirectionEnum {
   rdUnknown,
   rdInitial,
@@ -60,17 +62,119 @@ enum robotDirectionEnum {
   rdRight,
   rdSharpRight,
   rdBackwards
-};
+}; */
 
 static enum robotStateEnum     stat_RobotState     = rsInitial;
-static enum robotDirectionEnum stat_RobotDirection = rdInitial;
+// not used ?? static enum robotDirectionEnum stat_RobotDirection = rdInitial;
 
 static int stat_AveragingCount = 0;
 static int stat_AverageX;
 static int stat_AverageY;
 static unsigned long stat_TargetTime;
 
-// ============================================================================================
+// ============================================================================
+
+int followTapeAndReturnIsFinished(struct ioStruct* ptr_io)
+{
+  frontLCRsensorsEnum currLCRval;
+  directionCommandEnum currDirCmd;
+  int isFinished;
+
+  // Evaluate tape sensors into direction command.
+  // ============================================
+  
+  currLCRval = decodeFrontLCRsensors(ptr_io);
+  currDirCmd = dceUnknown;
+  isFinished = 0;
+  switch (currLCRval) 
+  {
+    case dfs_LCR_DarkDarkDark:
+      // Go forward  
+      currDirCmd = dceGoStraight;
+      break;
+
+    case dfs_LCR_DarkDarkLight:
+      // Go forward  
+      currDirCmd = dceGoStraight;
+      break;
+
+    case dfs_LCR_DarkLightDark:
+      // Go forward  ??? strange case ???
+      currDirCmd = dceGoStraight;
+      break;
+            
+    case dfs_LCR_DarkLightLight:
+      // Black is found only on Left - turn left!
+      currDirCmd = dceTurnLeft;
+      break;
+
+// -----
+
+    case dfs_LCR_LightDarkDark:
+      // Go forward  
+      currDirCmd = dceGoStraight;
+      break;
+
+    case dfs_LCR_LightDarkLight:
+      // Go forward  
+       currDirCmd = dceGoStraight;
+      break;
+      
+    case dfs_LCR_LightLightDark:
+      // Black is found only on Right - turn right!
+      currDirCmd = dceTurnRight;
+      break;
+
+   case dfs_LCR_LightLightLight:
+      // Go forward - all light means end of tape (?) - continue straight on...
+      isFinished = 1;
+      currDirCmd = dceGoStraight;
+      break;
+          
+    default:
+    // ToDo:  No Change - what to do?
+    break;
+  } // switch
+
+
+  // Evaluate turning command to motor parameters.
+  // =============================================
+  
+  switch (currDirCmd)
+  {
+    case dceTurnLeft:
+      // Turn left!
+      ptr_io->iosLeftEngine.direction = deBackward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;    
+      break;
+    
+   case dceGoStraight:
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;
+      break;
+      
+   case dceTurnRight:
+      // Turn right!
+      ptr_io->iosRightEngine.direction = deBackward;
+      ptr_io->iosRightEngine.speed = C_SPEED_LOW;
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;   
+      break;
+      
+    default:
+      // ToDo:  No Change - what to do?
+    break;   
+  } // switch
+
+  return isFinished;
+  
+} // followTapeAndReturnIsFinished
+
+// ============================================================================
 
 void taskSlope(struct ioStruct* ptr_io)
 {
@@ -82,12 +186,22 @@ void taskSlope(struct ioStruct* ptr_io)
       ptr_io->iosLeftEngine.speed = 0;
       ptr_io->iosRightEngine.direction = deForward;
       ptr_io->iosRightEngine.speed = 0;
-      stat_RobotDirection = rdStopped;
-      stat_RobotState = rsPrepAveraging;
-      ptr_io->iosDelayMS = 100;
+ // not used     stat_RobotDirection = rdStopped;
+      stat_RobotState = rsFollowingFirstTape;
       strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
     break;
 
+    case rsFollowingFirstTape:
+      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
+      if (followTapeAndReturnIsFinished(ptr_io) != 0)
+      {
+// not used        stat_RobotDirection = rdStopped;
+        stat_RobotState = rsPrepAveraging;
+        ptr_io->iosDelayMS = 100;
+      } // if
+    break;
+
+    
     case rsPrepAveraging:
       // Prepare averaging - motors stopped when you come here
       stat_AveragingCount = C_AVERAGING_COUNT;
@@ -116,12 +230,12 @@ void taskSlope(struct ioStruct* ptr_io)
     break;
 
     case rsFinishedAveragingAcc:
-      stat_RobotState = rsRunning;
+      stat_RobotState = rsRunningWithoutTape;
       stat_TargetTime = millis() + C_RUN_LENGTH_IN_MS;
       strcpy (ptr_io->iosMessageChArr, "rsFinishedAveragingAcc");
     break;
 
-    case rsRunning:
+    case rsRunningWithoutTape:
       // Check if time to do a new measurement of acc.
       strcpy (ptr_io->iosMessageChArr, "rsRunning");
       if (millis() > stat_TargetTime)
@@ -208,7 +322,8 @@ void taskSlope(struct ioStruct* ptr_io)
 
 } // taskSlope
 
-// ============================================================================================
+
+// ============================================================================
 
 /*
 
@@ -284,5 +399,8 @@ void taskSlope(struct ioStruct* ptr_io)
 
 } // loop
 */
+
 // ============================================================================
+
+
 
