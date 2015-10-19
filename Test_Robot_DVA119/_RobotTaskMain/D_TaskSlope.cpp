@@ -19,7 +19,7 @@
 #include "D_TaskSlope.h"
 #include "IO.h"
 
-#define C_THIS_TASK "Slope 2015-10-17"
+#define C_THIS_TASK "Slope 2015-10-19"
 
 #define C_RUN_LENGTH_IN_MS 500
 
@@ -71,6 +71,51 @@ static int stat_AveragingCount = 0;
 static int stat_AverageX;
 static int stat_AverageY;
 static unsigned long stat_TargetTime;
+
+// ============================================================================
+
+void setupMotorControlFromDirectionCommand(directionCommandEnum i_directionCommandEnum, struct ioStruct* ptr_io)
+{
+  // Evaluate turning command to motor parameters.
+  // =============================================
+  
+  switch (i_directionCommandEnum)
+  {
+    case dceTurnLeft:
+      // Turn left!
+      ptr_io->iosLeftEngine.direction = deBackward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;    
+      break;
+    
+   case dceGoStraight:
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;
+      break;
+      
+   case dceTurnRight:
+      // Turn right!
+      ptr_io->iosRightEngine.direction = deBackward;
+      ptr_io->iosRightEngine.speed = C_SPEED_LOW;
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;   
+      break;
+
+   case dcsStandStill:
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = 0;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = 0;   
+      break;
+      
+    default:
+      // ToDo:  No Change - what to do?
+    break;   
+  } // switch
+} // setupMotorControlFromCommand
 
 // ============================================================================
 
@@ -126,9 +171,9 @@ int followTapeAndReturnIsFinished(struct ioStruct* ptr_io)
       break;
 
    case dfs_LCR_LightLightLight:
-      // Go forward - all light means end of tape (?) - continue straight on...
+      // Stop - all light means end of tape (?) - set up to continue straight on in next super-state...
       isFinished = 1;
-      currDirCmd = dceGoStraight;
+      currDirCmd = dcsStandStill;
       break;
           
     default:
@@ -136,43 +181,87 @@ int followTapeAndReturnIsFinished(struct ioStruct* ptr_io)
     break;
   } // switch
 
-
-  // Evaluate turning command to motor parameters.
-  // =============================================
-  
-  switch (currDirCmd)
-  {
-    case dceTurnLeft:
-      // Turn left!
-      ptr_io->iosLeftEngine.direction = deBackward;
-      ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
-      ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;    
-      break;
-    
-   case dceGoStraight:
-      ptr_io->iosLeftEngine.direction = deForward;
-      ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;
-      ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;
-      break;
-      
-   case dceTurnRight:
-      // Turn right!
-      ptr_io->iosRightEngine.direction = deBackward;
-      ptr_io->iosRightEngine.speed = C_SPEED_LOW;
-      ptr_io->iosLeftEngine.direction = deForward;
-      ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;   
-      break;
-      
-    default:
-      // ToDo:  No Change - what to do?
-    break;   
-  } // switch
+  setupMotorControlFromDirectionCommand(currDirCmd, ptr_io);
 
   return isFinished;
   
 } // followTapeAndReturnIsFinished
+
+// ============================================================================
+
+int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY, struct ioStruct* ptr_io)
+{
+  frontLCRsensorsEnum currLCRval;
+  directionCommandEnum currDirCmd;
+  int isFinished;
+
+  // Evaluate Accelerometer averages into direction command.
+  // ======================================================
+  
+
+  currDirCmd = dceUnknown;
+  isFinished = 0;
+  
+  // Sets different speeds on each engine depending on right or left tilt.
+  if (i_AvgAccX < (C_ACC_FLAT_Y - C_ACC_WINDOW_WIDTH_Y))
+  {
+    // Right Tilt
+    ptr_io->iosRightEngine.speed = C_SPEED_LOW;
+    ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;
+  } // if
+  else
+  {
+    // Control according to Y-axis
+    if (i_AvgAccY <= (C_ACC_FLAT_Y + C_ACC_WINDOW_WIDTH_Y))
+    {
+      // No Tilt
+      ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
+      ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;      
+    } // if
+    else
+    {
+      // Left Tilt
+      ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
+      ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
+    } // else
+  } // else
+  
+  // Control according to X-value
+  if (i_AvgAccX < (C_ACC_FLAT_X - C_ACC_WINDOW_WIDTH_X))
+  {
+      // Going Right -> Turn left.
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = 0; 
+  } // if
+  else
+  {
+    if(i_AvgAccX <= (C_ACC_FLAT_X + C_ACC_WINDOW_WIDTH_X))
+    {
+        // Going Straight
+        ptr_io->iosRightEngine.direction = deForward; 
+        ptr_io->iosLeftEngine.direction = deForward;
+    } // if
+    else
+    {
+        // Going Left -> Turn Right
+        ptr_io->iosRightEngine.direction = deForward;
+        ptr_io->iosRightEngine.speed = 0;
+        ptr_io->iosLeftEngine.direction = deForward; 
+    } // else
+  } // else
+  
+
+  // Ccheck if we have reached the black tape again.
+  currLCRval = decodeFrontLCRsensors(ptr_io);
+  if (dfs_LCR_LightLightLight != currLCRval)
+  {
+    isFinished = 1;
+  } // if
+
+  return isFinished;
+  
+} // followAccelerometerStraightAndReturnIsFinished
 
 // ============================================================================
 
@@ -181,21 +270,19 @@ void taskSlope(struct ioStruct* ptr_io)
   switch(stat_RobotState)
   {
     case rsInitial:
+      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
       // Stop motors...
       ptr_io->iosLeftEngine.direction = deForward;
       ptr_io->iosLeftEngine.speed = 0;
       ptr_io->iosRightEngine.direction = deForward;
       ptr_io->iosRightEngine.speed = 0;
- // not used     stat_RobotDirection = rdStopped;
       stat_RobotState = rsFollowingFirstTape;
-      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
     break;
 
     case rsFollowingFirstTape:
       strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
       if (followTapeAndReturnIsFinished(ptr_io) != 0)
       {
-// not used        stat_RobotDirection = rdStopped;
         stat_RobotState = rsPrepAveraging;
         ptr_io->iosDelayMS = 100;
       } // if
@@ -203,22 +290,23 @@ void taskSlope(struct ioStruct* ptr_io)
 
     
     case rsPrepAveraging:
+      strcpy (ptr_io->iosMessageChArr, "rsPrepAveraging");
       // Prepare averaging - motors stopped when you come here
       stat_AveragingCount = C_AVERAGING_COUNT;
       stat_AverageX = ptr_io->iosAccelerometerX; 
       stat_AverageY = ptr_io->iosAccelerometerY;
       stat_RobotState = rsAveragingAcc;
       ptr_io->iosDelayMS = 10;
-      strcpy (ptr_io->iosMessageChArr, "rsPrepAveraging");
     break;
 
     case rsAveragingAcc:
+      strcpy (ptr_io->iosMessageChArr, "rsAveragingAcc");
       // Do averaging of accel.values
       stat_AveragingCount--;
       if (stat_AveragingCount > 0)
       {
-        stat_AverageX = (stat_AverageX << 2 + ptr_io->iosAccelerometerX << 2) / 4; // ToDo! *2 to get space for averaging?
-        stat_AverageY = (stat_AverageY << 2 + ptr_io->iosAccelerometerY << 2) / 4;
+        stat_AverageX = (stat_AverageX + ptr_io->iosAccelerometerX) / 2;
+        stat_AverageY = (stat_AverageY + ptr_io->iosAccelerometerY) / 2;
         ptr_io->iosDelayMS = 10;
       } // if
       else
@@ -226,16 +314,23 @@ void taskSlope(struct ioStruct* ptr_io)
          stat_RobotState = rsFinishedAveragingAcc;
          ptr_io->iosDelayMS = 0; // ToDo: onödig...
       } // else
-      strcpy (ptr_io->iosMessageChArr, "rsAveragingAcc");
+      
     break;
 
     case rsFinishedAveragingAcc:
+      strcpy (ptr_io->iosMessageChArr, "rsFinishedAveragingAcc");
       stat_RobotState = rsRunningWithoutTape;
       stat_TargetTime = millis() + C_RUN_LENGTH_IN_MS;
-      strcpy (ptr_io->iosMessageChArr, "rsFinishedAveragingAcc");
     break;
 
     case rsRunningWithoutTape:
+      strcpy (ptr_io->iosMessageChArr, "rsRunningWithoutTape");
+      if (followAccelerometerStraightAndReturnIsFinished(stat_AverageX, stat_AverageY, ptr_io) != 0)
+      {
+        stat_RobotState = rsPrepAveraging;
+        ptr_io->iosDelayMS = 100;
+      } // if
+    
       // Check if time to do a new measurement of acc.
       strcpy (ptr_io->iosMessageChArr, "rsRunning");
       if (millis() > stat_TargetTime)
@@ -248,61 +343,10 @@ void taskSlope(struct ioStruct* ptr_io)
       } // if
       else
       {
-        // Sets different speeds on each engine depending on right or left tilt.
-        if (stat_AverageY < (C_ACC_FLAT_Y - C_ACC_WINDOW_WIDTH_Y))
-        {
-          // Right Tilt
-          ptr_io->iosRightEngine.speed = C_SPEED_LOW;
-          ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;
-        } // if
-        else
-        {
-          // Control according to Y-axis
-          if (stat_AverageY <= (C_ACC_FLAT_Y + C_ACC_WINDOW_WIDTH_Y))
-          {
-            // No Tilt
-            ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
-            ptr_io->iosLeftEngine.speed = C_SPEED_HIGH;      
-          } // if
-          else
-          {
-            // Left Tilt
-            ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
-            ptr_io->iosRightEngine.speed = C_SPEED_HIGH;
-          } // else
-        } // else
-
-        // Control according to X-value
-        if (stat_AverageX < (C_ACC_FLAT_X - C_ACC_WINDOW_WIDTH_X))
-        {
-            // Going Right -> Turn left.
-            ptr_io->iosRightEngine.direction = deForward;
-            ptr_io->iosLeftEngine.direction = deForward;
-            ptr_io->iosLeftEngine.speed = 0; 
-        } // if
-        else
-        {
-          if(stat_AverageX <= (C_ACC_FLAT_X + C_ACC_WINDOW_WIDTH_X))
-          {
-              // Going Straight
-              ptr_io->iosRightEngine.direction = deForward; 
-              ptr_io->iosLeftEngine.direction = deForward;
-          } // if
-          else
-          {
-              // Going Left -> Turn Right
-              ptr_io->iosRightEngine.direction = deForward;
-              ptr_io->iosRightEngine.speed = 0;
-              ptr_io->iosLeftEngine.direction = deForward; 
-          } // else
-        } // else
         
         ptr_io->iosDelayMS = 10;
         
       } // else
-
-
-  
     break;
 
     case rsStopped:

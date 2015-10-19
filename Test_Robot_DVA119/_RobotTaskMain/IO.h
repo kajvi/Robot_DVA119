@@ -9,7 +9,7 @@
 //
 // History
 // 2015-10-16   Introduced
-//
+// 2015-10-19   Added dcsStandStill
 //
 // ============================================================================
 
@@ -44,7 +44,8 @@ enum directionCommandEnum {
     dceUnknown,
     dceTurnLeft,
     dceGoStraight,
-    dceTurnRight
+    dceTurnRight,
+    dcsStandStill
 };
 
 // Sets engine directions.
