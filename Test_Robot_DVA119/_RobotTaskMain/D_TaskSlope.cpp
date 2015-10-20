@@ -21,7 +21,7 @@
 
 #define C_THIS_TASK "Slope 2015-10-19"
 
-#define C_RUN_LENGTH_IN_MS 500
+#define C_RUN_LENGTH_IN_MS 3000
 
 #define C_AVERAGING_COUNT 10
 
@@ -41,14 +41,23 @@
 enum robotStateEnum {
   rsUnknown,
   rsInitial,
+  rsStartCalculateAccelerometeReferenceValues,
+  rsCalculatingAccelerometeReferenceValues,
   rsFollowingFirstTape,
   rsRunningWithoutTape,
-  rsPrepAveraging,
-  rsAveragingAcc,
-  rsFinishedAveragingAcc,
+  rsStartCalcAccelerometerAveraging,
+  rsCalcAccelerometerAveraging,
   rsStopped,
   rsFinished
 };
+
+enum accelerometerAverageCalcEnum {
+  aaUnknown,
+  aaInitial,
+  aaPrepAveraging,
+  aaAveragingAcc,
+  aaFinishedAveragingAcc
+} ;
 
 // Possible sub states = directions for the robot at this task
 /* not used???
@@ -65,11 +74,12 @@ enum robotDirectionEnum {
 }; */
 
 static enum robotStateEnum     stat_RobotState     = rsInitial;
-// not used ?? static enum robotDirectionEnum stat_RobotDirection = rdInitial;
 
-static int stat_AveragingCount = 0;
+
 static int stat_AverageX;
 static int stat_AverageY;
+static int stat_ReferenceX;   // Indicates data for current slope
+static int stat_ReferenceY;
 static unsigned long stat_TargetTime;
 
 // ============================================================================
@@ -265,43 +275,38 @@ int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY,
 
 // ============================================================================
 
-void taskSlope(struct ioStruct* ptr_io)
+// Input: i_DoNewCalc = 0: normal, = 1 means start new round
+// Returns 0 = doing calc, returns 1 means finished average calc.
+
+int calcAverageAccelerometerValuesXYIsFinished(int i_DoNewCalc, struct ioStruct* ptr_io)
 {
-  switch(stat_RobotState)
+  static enum accelerometerAverageCalcEnum stat_AccelerometerAverageCalcState = aaInitial;
+  static int stat_AveragingCount;
+  int retValue;
+
+  if (i_DoNewCalc == 1)
   {
-    case rsInitial:
-      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
-      // Stop motors...
-      ptr_io->iosLeftEngine.direction = deForward;
-      ptr_io->iosLeftEngine.speed = 0;
-      ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = 0;
-      stat_RobotState = rsFollowingFirstTape;
+    stat_AccelerometerAverageCalcState = aaInitial;
+  } // if
+  
+  retValue = 0;
+  switch(stat_AccelerometerAverageCalcState)
+  {
+    case aaInitial:
+      stat_AccelerometerAverageCalcState = aaPrepAveraging;
     break;
 
-    case rsFollowingFirstTape:
-      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
-      if (followTapeAndReturnIsFinished(ptr_io) != 0)
-      {
-        stat_RobotState = rsPrepAveraging;
-        ptr_io->iosDelayMS = 100;
-      } // if
-    break;
-
-    
-    case rsPrepAveraging:
-      strcpy (ptr_io->iosMessageChArr, "rsPrepAveraging");
+    case aaPrepAveraging:
       // Prepare averaging - motors stopped when you come here
       stat_AveragingCount = C_AVERAGING_COUNT;
       stat_AverageX = ptr_io->iosAccelerometerX; 
       stat_AverageY = ptr_io->iosAccelerometerY;
-      stat_RobotState = rsAveragingAcc;
-      ptr_io->iosDelayMS = 10;
+      stat_AccelerometerAverageCalcState = aaAveragingAcc;
+      ptr_io->iosDelayMS = 10;    
     break;
 
-    case rsAveragingAcc:
-      strcpy (ptr_io->iosMessageChArr, "rsAveragingAcc");
-      // Do averaging of accel.values
+    case aaAveragingAcc:
+      // Do averaging of accel.values by counting down 10ms delays
       stat_AveragingCount--;
       if (stat_AveragingCount > 0)
       {
@@ -311,41 +316,114 @@ void taskSlope(struct ioStruct* ptr_io)
       } // if
       else
       {
-         stat_RobotState = rsFinishedAveragingAcc;
-         ptr_io->iosDelayMS = 0; // ToDo: onödig...
+         stat_AccelerometerAverageCalcState = aaFinishedAveragingAcc;
+         retValue = 1;
+         ptr_io->iosDelayMS = 0;  // ToDo: onödig...
       } // else
-      
     break;
 
-    case rsFinishedAveragingAcc:
-      strcpy (ptr_io->iosMessageChArr, "rsFinishedAveragingAcc");
-      stat_RobotState = rsRunningWithoutTape;
-      stat_TargetTime = millis() + C_RUN_LENGTH_IN_MS;
+    case aaFinishedAveragingAcc:
+      retValue = 1;  // ToDo: onödigt?
+    break;
+        
+    default:
+      // ERROR ToDo
+    break;    
+  } // switch
+
+  return retValue;
+  
+} // calcAverageAccelerometerValuesXYIsFinished
+
+// ============================================================================
+
+void taskSlope(struct ioStruct* ptr_io)
+{
+  switch(stat_RobotState)
+  {
+    case rsInitial:
+      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
+      // Make sure motors stopped...
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = 0;
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = 0;
+      stat_RobotState = rsStartCalculateAccelerometeReferenceValues;
     break;
 
+    case rsStartCalculateAccelerometeReferenceValues:
+      strcpy (ptr_io->iosMessageChArr, "rsStartCalculateAccelerometeReferenceValues");
+      calcAverageAccelerometerValuesXYIsFinished(1, ptr_io); // Start a new average round with 1st param = 1
+      stat_RobotState = rsCalculatingAccelerometeReferenceValues;
+    break;
+    
+    case rsCalculatingAccelerometeReferenceValues:
+      strcpy (ptr_io->iosMessageChArr, "rsCalculateAccelerometeReferenceValues");
+      if (calcAverageAccelerometerValuesXYIsFinished(0, ptr_io) != 0)
+      {
+        stat_RobotState = rsFollowingFirstTape;
+        stat_TargetTime = millis() + C_RUN_LENGTH_IN_MS;  // Prepare time for next averaging
+        ptr_io->iosDelayMS = 10;
+      } // if    
+
+      // Always update ref.values from calc average.
+      stat_ReferenceX = stat_AverageX;
+      stat_ReferenceY = stat_AverageY;
+    break;
+    
+    case rsFollowingFirstTape:
+      strcpy (ptr_io->iosMessageChArr, "rsFollowingFirstTape");
+      if (followTapeAndReturnIsFinished(ptr_io) != 0)
+      {
+        // No more tape - stop motors and wait until start calc of average acc.
+        stat_RobotState = rsStartCalcAccelerometerAveraging;
+      } // if
+    break;
+
+    case rsStartCalcAccelerometerAveraging:
+      strcpy (ptr_io->iosMessageChArr, "rsStartCalcAccelerometerAveraging");
+      ptr_io->iosLeftEngine.speed = 0;
+      ptr_io->iosRightEngine.speed = 0;
+      ptr_io->iosDelayMS = 500; // ToDo stop-tid 
+        
+      calcAverageAccelerometerValuesXYIsFinished(1, ptr_io); // Start a new average round with 1st param = 1
+      stat_RobotState = rsCalcAccelerometerAveraging;
+    break;
+
+    case rsCalcAccelerometerAveraging:
+      strcpy (ptr_io->iosMessageChArr, "rsCalcAccelerometerAveraging");
+      if (calcAverageAccelerometerValuesXYIsFinished(0, ptr_io) != 0)
+      {
+        stat_RobotState = rsRunningWithoutTape;
+        stat_TargetTime = millis() + C_RUN_LENGTH_IN_MS;  // Prepare time for next averaging
+        ptr_io->iosDelayMS = 10;
+      } // if    
+    break;
+        
     case rsRunningWithoutTape:
       strcpy (ptr_io->iosMessageChArr, "rsRunningWithoutTape");
       if (followAccelerometerStraightAndReturnIsFinished(stat_AverageX, stat_AverageY, ptr_io) != 0)
       {
-        stat_RobotState = rsPrepAveraging;
-        ptr_io->iosDelayMS = 100;
+        // Reached target - stopp motors and report that task finisked
+        ptr_io->iosLeftEngine.speed = 0;
+        ptr_io->iosRightEngine.speed = 0;
+        ptr_io->iosDelayMS = 10; 
+        stat_RobotState = rsFinished;
+        break;
       } // if
     
       // Check if time to do a new measurement of acc.
-      strcpy (ptr_io->iosMessageChArr, "rsRunning");
       if (millis() > stat_TargetTime)
       {
         // Stop motors.
         ptr_io->iosLeftEngine.speed = 0;
         ptr_io->iosRightEngine.speed = 0;  
-        ptr_io->iosDelayMS = 100;      
-        stat_RobotState = rsPrepAveraging;
+        ptr_io->iosDelayMS = 500; // ToDo stop-tid ?
+        stat_RobotState = rsCalcAccelerometerAveraging;
       } // if
       else
       {
-        
         ptr_io->iosDelayMS = 10;
-        
       } // else
     break;
 
@@ -354,7 +432,7 @@ void taskSlope(struct ioStruct* ptr_io)
     break;
 
     case rsFinished:
-       strcpy (ptr_io->iosMessageChArr, "rsFinishedRunning");
+       strcpy (ptr_io->iosMessageChArr, "rsFinished");
        ptr_io->iosCurrentTaskIsFinished = 1; 
     break;
     
