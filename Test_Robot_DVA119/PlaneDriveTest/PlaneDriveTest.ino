@@ -17,7 +17,7 @@ myMotors Motors; // Create motors object
 #define C_SPEED_MEDIUM 80
 #define C_SPEED_LOW 60
 
-#define C_ACC_FLAT_X 667
+#define C_ACC_FLAT_X 347
 // #define C_TILT_X TO DO!
 #define C_ACC_FLAT_Y 342
 // #define C_TILT_Y TO DO!
@@ -35,10 +35,41 @@ mySensors Sensors; // create sensors object
 
 // ============================================================================
 
+String adjustStr(String i_Str, int i_Width)
+{
+  // i_Width < 0 - add spaces after i_Str - Left Justify
+  // i_Width > 0 - add spaces before i_Str - Right Justify
+  // No if i_Str longer that abs(i_Width) - no change!
+  
+  String resultStr = i_Str;
+  
+  if (i_Width > 0)
+  {
+    // Add spaces before
+    while (resultStr.length() < abs(i_Width))
+    {
+      resultStr = ' ' + resultStr;
+    } // while
+  } // if
+  else
+  {
+    // Add spaces after
+    while (resultStr.length() < abs(i_Width))
+    {
+      resultStr = resultStr + ' ';
+    } // while    
+  } // else
+  
+  return resultStr;
+   
+} // adjustStr
+
+// ============================================================================
+
 void setup() 
 { 
-  //Serial.begin(9600); // set up Serial library at 9600 bps
-  //Serial.println(C_THIS_VERSION);
+  Serial.begin(9600); // set up Serial library at 9600 bps
+  Serial.println(C_THIS_VERSION);
   
   Sensors.beginSensors(); // start sensors
 
