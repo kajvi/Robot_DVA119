@@ -122,7 +122,8 @@ void loop()
     stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
     stat_IO.iosReflFrontCenter_1 = Sensors.readReflect1(); // Read digital value of reflect sensor 1
     stat_IO.iosReflFrontRight_2  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
-
+    stat_IO.iosReflAnalog_3  = Sensors.readReflect3();
+    
     stat_IO.iosAccelerometerX  = Sensors.readAccX();
     stat_IO.iosAccelerometerY  = Sensors.readAccY();
 
@@ -139,8 +140,11 @@ void loop()
         taskLineFollow(&stat_IO);
         if (stat_IO.iosCurrentTaskIsFinished != 0)
         {
+          stat_IO.iosLeftEngine.speed = 0;
+          stat_IO.iosRightEngine.speed = 0;
           // Switch to next task if currenttask is finished
           stat_currentTask = rtLabyrinth;
+          stat_currentTask = rtEndSentinel; // TEST!
         }
         break;
       }

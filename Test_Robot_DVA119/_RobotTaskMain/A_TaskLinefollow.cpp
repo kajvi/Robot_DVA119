@@ -140,8 +140,8 @@ void taskLineFollow(struct ioStruct* ptr_io)
       if (stat_LastState != rsLeft)
       { 
         // Variable Speed depending on state count : INITIATED TO MEDIUM.
-        stateSpeedRight = C_SPEED_MEDIUM;
-        stateSpeedLeft = C_SPEED_MEDIUM;
+        stateSpeedRight = C_SPEED_LOW;
+        stateSpeedLeft = C_SPEED_LOW;
         stateCount = 0;
         stateEntry = 0;
       }
@@ -210,8 +210,8 @@ void taskLineFollow(struct ioStruct* ptr_io)
       if (stat_LastState != rsRight)
       { 
         // Variable Speed depending on state count : INITIATED TO MEDIUM.
-        stateSpeedRight = C_SPEED_MEDIUM;
-        stateSpeedLeft = C_SPEED_MEDIUM;
+        stateSpeedRight = C_SPEED_LOW;
+        stateSpeedLeft = C_SPEED_LOW;
         stateCount = 0;
         stateEntry = 0;
       }
@@ -315,7 +315,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
     {
       if (stateEntry > C_STATE_ENTRY_LIMITER)
       {
-        //ptr_io->iosCurrentTaskIsFinished = 1;
+        ptr_io->iosCurrentTaskIsFinished = 1;
         stat_LastState = rsFinnished;
         stateCount++;
         strcpy (ptr_io->iosMessageChArr, "rsFinnished");
@@ -376,7 +376,10 @@ void taskLineFollow(struct ioStruct* ptr_io)
   // Black is found on all: Different actions depending on state and direction.
   if ( (ptr_io->iosReflFrontLeft_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontRight_2 == C_DARK_1) )
   {
-    stat_RobotState = rsFinnished;
+    if ( (ptr_io->iosReflAnalog_3 >= C_ANALOG_DARK))
+    {
+      stat_RobotState = rsFinnished;
+    }
   }
 
   // End of Sensor Data evaluation.

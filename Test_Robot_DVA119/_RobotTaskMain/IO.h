@@ -23,6 +23,7 @@
 //= 0 om ljust, =1 om svart
 #define C_DARK_1 1
 #define C_LIGHT_0 0
+#define C_ANALOG_DARK 800
 
 // Decoded front senors: Left Center, Right
 enum frontLCRsensorsEnum {
@@ -73,6 +74,7 @@ struct ioStruct {
   int iosReflFrontLeft_0;
   int iosReflFrontCenter_1;
   int iosReflFrontRight_2;
+  int iosReflAnalog_3;
 
   // Accelerometer
   int iosAccelerometerX;
