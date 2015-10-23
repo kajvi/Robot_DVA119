@@ -27,11 +27,14 @@
 #include <Servo.h> 
 #include <Wire.h> 
 
+mySensors Sensors; // create Sensors object
 myMotors Motors; // Create motors object
 
 // constants won't change. Used here to set a pin number :
 const int ledRedPin =  12;      // the number of the LED pin
 const int ledGreenPin =  13;
+const int led2RedPin =  2;   // 10 fails???   // the number of the LED pin
+const int led2GreenPin =  11;
 
 // Variables will change :
 int ledRedState = LOW;             // ledState used to set the LED
@@ -45,11 +48,13 @@ void setup() {
   // set the digital pin as output:
   pinMode(ledRedPin, OUTPUT);
   pinMode(ledGreenPin, OUTPUT);
-  
+   pinMode(led2RedPin, OUTPUT);
+  pinMode(led2GreenPin, OUTPUT);
+   
   //Serial.begin(9600); // set up Serial library at 9600 bps
   //Serial.println(ledGreenState);
   
-  //Sensors.beginSensors(); // start sensors
+  Sensors.beginSensors(); // start sensors
 
   Motors.beginMotors(); // Start up motors 
 } // setup
@@ -70,17 +75,47 @@ void loop()
  *  1 ms        märkbar   märkbar
  *  0 ms        -         -
  */
-    onTimeInMs = 20;
+    onTimeInMs = 500;
     
     digitalWrite(ledGreenPin, HIGH);
     delay(onTimeInMs); 
-    digitalWrite(ledGreenPin, LOW);
+    digitalWrite(ledGreenPin, LOW);    
 
     delay(500);
 
     digitalWrite(ledRedPin, HIGH);
     delay(onTimeInMs); 
     digitalWrite(ledRedPin, LOW);
-        
+ 
+
+    delay(500);
+
+    digitalWrite(ledRedPin, HIGH);
+    digitalWrite(ledGreenPin, HIGH);
+    delay(onTimeInMs); 
+    digitalWrite(ledRedPin, LOW);
+    digitalWrite(ledGreenPin, LOW);    
+
+   delay(500);
+ 
+    digitalWrite(led2GreenPin, HIGH);
+    delay(onTimeInMs); 
+    digitalWrite(led2GreenPin, LOW);
+
+    delay(500);
+
+    digitalWrite(led2RedPin, HIGH);
+    delay(onTimeInMs); 
+    digitalWrite(led2RedPin, LOW);
+
+
+    delay(500);
+
+    digitalWrite(led2RedPin, HIGH);
+    digitalWrite(led2GreenPin, HIGH);
+    delay(onTimeInMs); 
+    digitalWrite(led2RedPin, LOW);
+    digitalWrite(led2GreenPin, LOW);
+           
 }
 

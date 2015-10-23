@@ -9,7 +9,7 @@
 //
 // History
 // 2015-10-16   Introduced
-//
+// 2015-10-23   Rename of LED to Right LED when left LED added
 //
 // ============================================================================
 
@@ -19,7 +19,7 @@
 
 #include "A_TaskLineFollow.h"
 
-#define C_THIS_TASK "LineFollow 2015-10-16"
+#define C_THIS_TASK "LineFollow 2015-10-23"
 
 // Local speed triming for engine stream.
 #define C_SPEED_HIGH 120
@@ -89,8 +89,8 @@ void taskLineFollow(struct ioStruct* ptr_io)
       stat_RobotState = rsForward;
       stat_LastState = rsInitial;
       strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
-      ptr_io->iosLedRed = 1;
-      ptr_io->iosLedGreen = 1;
+      ptr_io->iosRightLedRed = 1;
+      ptr_io->iosRightLedGreen = 1;
       
       break;
     }
@@ -148,7 +148,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
 
       if (stateEntry > C_STATE_ENTRY_LIMITER)
       {
-        ptr_io->iosLedRed = 1;
+        ptr_io->iosRightLedRed = 1;
         // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE 
         stateSpeedRight = C_SPEED_MEDIUM + (stateCount/C_STATE_COUNT_DIVIDER);
 
@@ -218,7 +218,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
 
       if (stateEntry > C_STATE_ENTRY_LIMITER)
       {
-        ptr_io->iosLedGreen = 1;
+        ptr_io->iosRightLedGreen = 1;
         // Set stateSpeed in increments of C_STATE_COUNT_DIVIDER entrys to THIS STATE 
         stateSpeedLeft = C_SPEED_MEDIUM + (stateCount/C_STATE_COUNT_DIVIDER);
 
@@ -368,7 +368,7 @@ void taskLineFollow(struct ioStruct* ptr_io)
   if ( (ptr_io->iosReflFrontLeft_0 == C_LIGHT_0) &&  (ptr_io->iosReflFrontCenter_1 == C_LIGHT_0) && (ptr_io->iosReflFrontRight_2 == C_LIGHT_0) )
   {
     //stat_RobotState = rsBackward;
-    ptr_io->iosLedGreen = 1;
+    ptr_io->iosRightLedGreen = 1;
     stat_RobotState = stat_LastState;
   } // if
 

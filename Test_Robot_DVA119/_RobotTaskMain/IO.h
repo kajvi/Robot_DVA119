@@ -10,7 +10,7 @@
 // History
 // 2015-10-16   Introduced
 // 2015-10-19   Added dcsStandStill
-//
+// 2015-10-23   Added second LED (Left, old now = Right)
 // ============================================================================
 
 
@@ -76,6 +76,9 @@ struct ioStruct {
   int iosReflFrontRight_2;
   int iosReflAnalog_3;
 
+  // Analog IR sensor
+  int iosIRAnalog;
+  
   // Accelerometer
   int iosAccelerometerX;
   int iosAccelerometerY;
@@ -89,9 +92,10 @@ struct ioStruct {
   struct engineStruct iosRightEngine;
 
   // Led Streams
-  int iosLedGreen;
-  int iosLedRed;
-
+  int iosRightLedGreen;
+  int iosRightLedRed;
+  int iosLeftLedGreen;
+  int iosLeftLedRed;
 
   // Status
   // ======

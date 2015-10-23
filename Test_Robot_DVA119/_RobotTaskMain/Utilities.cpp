@@ -10,7 +10,7 @@
 // History
 // 2015-10-16   Introduced
 // 2015-10-19   decodeFrontLCRsensors: fixed handling of 3-bit invert.
-//
+// 2015-10-23   Added: setUpLedFromValueLimits
 // ============================================================================
 
 #include "Utilities.h"
@@ -58,4 +58,33 @@ frontLCRsensorsEnum decodeFrontLCRsensors(struct ioStruct* ptr_io)
 } // decodeFrontLCRsensors
 
 // ============================================================================
+
+// Led Colour := OFF, Orange, Red, Green dep. input value
+
+void setUpLedFromValueLimits(int i_Value, int i_LL, int i_LH, int i_HL, int i_HH, int * ptr_LedGreen, int * ptr_LedRed)
+{
+  if (i_Value < i_LL)
+  {
+    *ptr_LedGreen = LOW;
+    *ptr_LedRed = LOW;
+  }
+  else if (i_Value < i_LH)
+  {
+    *ptr_LedGreen = HIGH;
+    *ptr_LedRed = HIGH;
+  }
+  else if (i_Value < i_HL)
+  {
+    *ptr_LedGreen = HIGH;
+    *ptr_LedRed = LOW;
+  }
+  else if (i_Value < i_HH)
+  {
+    *ptr_LedGreen = LOW;
+    *ptr_LedRed = HIGH;
+  }
+} // setUpLedFromValueLimits
+
+// ============================================================================
+
 

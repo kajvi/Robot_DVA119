@@ -9,7 +9,7 @@
 //
 // History
 // 2015-10-16   Introduced
-//
+// 2015-10-23   Added second LED (Left, old now = Right)
 //
 // ============================================================================
 
@@ -18,12 +18,13 @@
 #include <Servo.h> 
 #include <Wire.h>
 #include "IO.h" 
+#include "Utilities.h"
 #include "A_TaskLineFollow.h"
 #include "B_TaskLabyrinth.h"
 #include "C_TaskBalls.h"
 #include "D_TaskSlope.h"
 
-#define C_THIS_VERSION "Main 2015-10-16"
+#define C_THIS_VERSION "Main 2015-10-23"
 
 #define C_MOTOR_LEFT_1 1
 #define C_MOTOR_RIGHT_2 2
@@ -49,8 +50,10 @@ static struct ioStruct stat_IO;
 static enum robotTaskEnum stat_currentTask;
 
 // constants won't change. Used here to set a pin number :
-const int LedRedPin =  12;      // the number of the LED pin
-const int LedGreenPin =  13;
+const int LedRightRedPin =  12;      // the number of the LED pin
+const int LedRightGreenPin =  13;
+const int LedLeftRedPin =  2;   // 10 fails??? är input för brytare!
+const int LedLeftGreenPin =  11;
 
 // Variables for timekeeping.
 static unsigned long targetTime = 0;
@@ -65,13 +68,17 @@ void setup()
   stat_IO.iosDelayMS = 0;
   
   // Sets initial Led output to off : LOW = off : HIGH = on
-  stat_IO.iosLedRed = LOW;             
-  stat_IO.iosLedGreen = LOW;
+  stat_IO.iosRightLedRed = LOW;             
+  stat_IO.iosRightLedGreen = LOW;
+  stat_IO.iosLeftLedRed = LOW;             
+  stat_IO.iosLeftLedGreen = LOW;
 
   // set the digital pin as output:
-  pinMode(LedRedPin, OUTPUT);
-  pinMode(LedGreenPin, OUTPUT);
-
+  pinMode(LedLeftRedPin, OUTPUT);
+  pinMode(LedLeftGreenPin, OUTPUT);
+  pinMode(LedRightRedPin, OUTPUT);
+  pinMode(LedRightGreenPin, OUTPUT);
+  
   // Initiate robot Task to the first task: linefollow
   stat_currentTask = rtLinefollow;
   
@@ -90,6 +97,8 @@ void setup()
 void loop() 
 {
   static bool isBreaked = 0;
+  int tmp;
+  
 #ifdef C_DEBUG_PRINT_ON
 
   Serial.print(millis());
@@ -122,8 +131,13 @@ void loop()
     stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
     stat_IO.iosReflFrontCenter_1 = Sensors.readReflect1(); // Read digital value of reflect sensor 1
     stat_IO.iosReflFrontRight_2  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
-    stat_IO.iosReflAnalog_3  = Sensors.readReflect3();
+    stat_IO.iosReflAnalog_3  = Sensors.readReflect3(); // Read analog value of reflect sensor 3
+
+    stat_IO.iosIRAnalog = Sensors.readIR0();  //Analog value of IR sensor
     
+    // Test:Left LD ind. new analog refl sensor
+    setUpLedFromValueLimits(stat_IO.iosIRAnalog, 350, 450, 550, 1023, &stat_IO.iosLeftLedGreen, &stat_IO.iosLeftLedRed);
+
     stat_IO.iosAccelerometerX  = Sensors.readAccX();
     stat_IO.iosAccelerometerY  = Sensors.readAccY();
 
@@ -145,6 +159,7 @@ void loop()
           // Switch to next task if currenttask is finished
           stat_currentTask = rtLabyrinth;
           stat_currentTask = rtEndSentinel; // TEST!
+          delay(100); // Try to move robot in position for labyrinth
         }
         break;
       }
@@ -209,11 +224,15 @@ void loop()
     } // if
 
     
-    digitalWrite(LedGreenPin, stat_IO.iosLedGreen);
-    digitalWrite(LedRedPin, stat_IO.iosLedRed);
-    stat_IO.iosLedRed = LOW;             
-    stat_IO.iosLedGreen = LOW;
-
+    digitalWrite(LedLeftGreenPin, stat_IO.iosLeftLedGreen);
+    digitalWrite(LedLeftRedPin, stat_IO.iosLeftLedRed);
+    digitalWrite(LedRightGreenPin, stat_IO.iosRightLedGreen);
+    digitalWrite(LedRightRedPin, stat_IO.iosRightLedRed);
+    stat_IO.iosRightLedRed = LOW;             
+    stat_IO.iosRightLedGreen = LOW;
+    stat_IO.iosLeftLedRed = LOW;             
+    stat_IO.iosLeftLedGreen = LOW;
+    
 #ifdef C_DEBUG_PRINT_ON
     if (stat_IO.iosMessageChArr[0] != 0)
     {
