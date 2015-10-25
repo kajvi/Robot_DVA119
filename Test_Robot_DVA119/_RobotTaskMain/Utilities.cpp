@@ -11,6 +11,7 @@
 // 2015-10-16   Introduced
 // 2015-10-19   decodeFrontLCRsensors: fixed handling of 3-bit invert.
 // 2015-10-23   Added: setUpLedFromValueLimits
+// 2015-10-25   Fixed: adapted to wrong left-right description of sensors!
 // ============================================================================
 
 #include "Utilities.h"
@@ -52,7 +53,9 @@ frontLCRsensorsEnum decodeFrontLCRsensors(struct ioStruct* ptr_io)
 {
   int tmp;
   
-  tmp = (ptr_io->iosReflFrontLeft_0 << 2) || (ptr_io->iosReflFrontCenter_1 << 1) || (ptr_io->iosReflFrontRight_2);
+ // tmp = (ptr_io->iosReflFrontLeft_0 << 2) || (ptr_io->iosReflFrontCenter_1 << 1) || (ptr_io->iosReflFrontRight_2);
+ // FEL ORDNING PÅ SENSORERNA! Väntser och höger förväxlat jmf labb-beskrivning!
+  tmp = (ptr_io->iosReflFrontLeft_0 << 0) || (ptr_io->iosReflFrontCenter_1 << 1) || (ptr_io->iosReflFrontRight_2 << 2);
   return (frontLCRsensorsEnum) ((!tmp & 0x7) + 1); // 0 = dfsUnknown, 1 = dfs_LCR_DarkDarkDark, Dark = 1, Light = 0!
   
 } // decodeFrontLCRsensors
