@@ -27,6 +27,8 @@
 
 #define C_TILT_X 338
 #define C_TILT_Y 361
+#define C_TILT_X_ASKEW C_TILT_X + 20
+
 
 #define C_WINDOW_X 0
 
@@ -44,9 +46,7 @@
 enum robotStateEnum {
   rsUnknown,
   rsInitial,
-  rsGoOverTheEdgeZagLeft,
-  rsGoOverTheEdgeZagRight1,
-  rsGoOverTheEdgeZagRight2,
+  rsGoOverTheEdgeAskew,
   rsFollowingFirstTape,
   rsRunningWithoutTape,
   rsStopped,
@@ -305,6 +305,11 @@ int followAccelerometerStraightAndReturnIsFinished(struct ioStruct* ptr_io)
     } // if
   } // if
 
+
+  return isFinished;
+  
+} // followAccelerometerStraightAndReturnIsFinished
+
 /* *********************************************
 
    valAxisX = (valAxisX + Sensors.readAccX()) / 2;
@@ -356,9 +361,93 @@ int followAccelerometerStraightAndReturnIsFinished(struct ioStruct* ptr_io)
 
 // *********************************************/
 
+
+
+// ============================================================================
+
+int followAccelerometerAskewAndReturnIsFinished(struct ioStruct* ptr_io)
+{
+  frontLCRsensorsEnum currLCRval;
+  directionCommandEnum currDirCmd;
+  int isFinished;
+  int diffX; 
+
+  // Evaluate Accelerometer averages into direction command.
+  // ======================================================
+  
+
+  currDirCmd = dceUnknown;
+  isFinished = 0;
+  
+  stat_ValAxisX = (stat_ValAxisX + ptr_io->iosAccelerometerX) / 2;
+  stat_ValAxisY = (stat_ValAxisY + ptr_io->iosAccelerometerY) / 2;
+  
+  diffX = stat_ValAxisX - C_TILT_X_ASKEW; 
+
+
+   if (diffX < -C_WINDOW_X)
+   {
+     // ptr_io->iosRightLedGreen = HIGH;
+     // ptr_io->iosRightLedRed = LOW;
+      
+      // Om detta sker så har vi Uppåtlut och Höger motor behöver Kräm
+      int leftSpeed = C_SPEED_MEDIUM + diffX*C_K_L;
+      
+      
+      if (leftSpeed < 40)
+      {
+      //  ptr_io->iosRightLedGreen = HIGH;
+      //  ptr_io->iosRightLedRed =  HIGH;
+        leftSpeed = C_SPEED_LOW;
+        ptr_io->iosLeftEngine.direction = deBackward;
+        ptr_io->iosLeftEngine.speed = leftSpeed;
+      } // if
+      else
+      {
+        ptr_io->iosLeftEngine.direction = deForward;
+        ptr_io->iosLeftEngine.speed = leftSpeed;
+      } // else
+    
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM*1.08 - diffX*C_K_R;
+   
+     } // if
+    else
+    if (diffX < C_WINDOW_X)
+    {
+    //  ptr_io->iosRightLedGreen = LOW;
+    //  ptr_io->iosRightLedRed =  LOW;
+    } // if
+    else
+    {
+    //  ptr_io->iosRightLedGreen = LOW;
+    //  ptr_io->iosRightLedRed =  HIGH;
+
+      
+      // Vi har Nedåtlut och Vänster Motor behöver kräm!
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_MEDIUM + diffX*C_K_L;      
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM*1.08 - diffX*C_K_R;
+    } // else
+
+    ptr_io->iosDelayMS = 10;
+ 
+  // Check if we have reached the black tape again.
+  // Black is found on all: Different actions depending on state and direction.
+  if ( (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontLeft_2 == C_DARK_1) )
+  {
+    if ( (ptr_io->iosReflAnalog_3 < C_ANALOG_DARK))
+    {
+      isFinished = 1;
+    } // if
+  } // if
+
+
   return isFinished;
   
-} // followAccelerometerStraightAndReturnIsFinished
+} // followAccelerometerAskewAndReturnIsFinished
+
 
 // ============================================================================
 
@@ -372,51 +461,29 @@ void taskSlope(struct ioStruct* ptr_io)
       strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
       // Make start zag to left
       ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = 0;
+      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM;
       ptr_io->iosLeftEngine.direction = deForward;
       ptr_io->iosLeftEngine.speed = C_SPEED_MEDIUM;
-      stat_RobotState = rsGoOverTheEdgeZagRight1;
-      ptr_io->iosDelayMS = 650;
+      stat_RobotState = rsGoOverTheEdgeAskew;
+      ptr_io->iosDelayMS = 200;
      break;
 
-    case rsGoOverTheEdgeZagRight1:
+    case rsGoOverTheEdgeAskew:
 ptr_io->iosLeftLedRed = HIGH;    
 ptr_io->iosLeftLedGreen = LOW;      
-        ptr_io->iosRightEngine.direction = deForward;
-        ptr_io->iosRightEngine.speed = C_SPEED_HIGH/2;
-        ptr_io->iosLeftEngine.direction = deForward;
-        ptr_io->iosLeftEngine.speed = C_SPEED_LOW/2;
-        stat_RobotState = rsGoOverTheEdgeZagRight2;
-        ptr_io->iosDelayMS = 500;
+      strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeAskew");
+      if (followAccelerometerAskewAndReturnIsFinished(ptr_io) != 0)
+      {
+        // Reached tape - follow it
+        stat_RobotState = rsFollowingFirstTape;
+      } // if
      break;
       
-    case rsGoOverTheEdgeZagRight2:
-ptr_io->iosLeftLedRed = LOW;    
-ptr_io->iosLeftLedGreen = HIGH;     
-      // Go right until tape found i middle sensor 
-      // iosReflAnalog_3  iosReflFrontCenter_1
-       strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeZagRight");
-  
-       // Condition below is directly activated - needs more work...
-      if ( (ptr_io->iosReflFrontLeft_2 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) )
-      {
-        stat_RobotState = rsFollowingFirstTape;
-        ptr_io->iosLeftEngine.direction = deForward;
-        ptr_io->iosRightEngine.direction = deForward;
-        stat_RecommendedSpeed = 0;
-        ptr_io->iosLeftEngine.speed = stat_RecommendedSpeed;
-        ptr_io->iosRightEngine.speed = stat_RecommendedSpeed;
-       } // if;
-    break;
-        
     case rsFollowingFirstTape:
       ptr_io->iosRightLedRed = HIGH;
       ptr_io->iosRightLedGreen = LOW;
       strcpy (ptr_io->iosMessageChArr, "rsFollowingFirstTape");
-      if (abs (ptr_io->iosAccelerometerX - 335) < 10)
-      {
-        stat_RecommendedSpeed = C_SPEED_MIDDLE;
-      } // if
+      stat_RecommendedSpeed = C_SPEED_MIDDLE;
       if (followTapeAndReturnIsFinished(ptr_io) != 0)
       {
         // No more tape - just go on

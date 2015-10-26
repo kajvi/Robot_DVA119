@@ -30,11 +30,12 @@
 #define C_MOTOR_LEFT_2 2
 
 // If the line below not inside a comment, then debug printouts are made on the serial port.
-//#define C_DEBUG_PRINT_ON
+#define C_DEBUG_PRINT_ON
 
 // Sets the Task which the robot is solving.
 enum robotTaskEnum {
   rtUnknown,
+  rtInitial,
   rtLinefollow,
   rtLabyrinth,
   rtBalls,
@@ -57,7 +58,10 @@ const int LedLeftGreenPin =  11;
 
 // Variables for timekeeping.
 static unsigned long targetTime = 0;
+static unsigned long viftTime = 0;
 static int checkPoint = 0;
+static int viftCounter = 0;
+static unsigned long viftInProg = 0;
     
 // ============================================================================================
 
@@ -81,7 +85,7 @@ void setup()
   
   // Initiate robot Task to the first task: linefollow
   // stat_currentTask = rtLinefollow;
-  stat_currentTask = rtSlope;
+  stat_currentTask = rtInitial;
   Motors.beginMotors();   // start motors
   Sensors.beginSensors(); // start sensors
 
@@ -135,9 +139,6 @@ void loop()
 
     stat_IO.iosIRAnalog = Sensors.readIR0();  //Analog value of IR sensor
     
-    // Test:Left LD ind. new analog refl sensor
-    setUpLedFromValueLimits(stat_IO.iosIRAnalog, 350, 450, 550, 1023, &stat_IO.iosLeftLedGreen, &stat_IO.iosLeftLedRed);
-
     stat_IO.iosAccelerometerX  = Sensors.readAccX();
     stat_IO.iosAccelerometerY  = Sensors.readAccY();
 
@@ -149,6 +150,45 @@ void loop()
     // Determine which task the robot is preforming
     switch(stat_currentTask)
     {
+      case rtInitial:
+      {
+        // Test:Left LD ind. new analog refl sensor
+        setUpLedFromValueLimits(stat_IO.iosIRAnalog, 350, 450, 550, 1023, &stat_IO.iosLeftLedGreen, &stat_IO.iosLeftLedRed);
+        if ((stat_IO.iosIRAnalog > 500) )
+        {
+          if (millis() > viftInProg)
+          {
+            viftCounter++;
+            Serial.println(viftCounter);
+            viftTime = millis() + 1000;
+            viftInProg = millis() + 300;
+          }
+        }
+
+        if (millis() >= viftTime)
+        {
+          if (viftCounter == 2)
+          {
+            stat_currentTask = rtLinefollow;
+            stat_IO.iosRightLedRed = HIGH;
+            stat_IO.iosDelayMS = 1000;
+            viftCounter = 0;
+          }
+          if (viftCounter == 3)
+          {
+            stat_currentTask = rtSlope;
+            stat_IO.iosRightLedGreen = HIGH;
+            stat_IO.iosDelayMS = 1000;
+            viftCounter = 0;
+          }
+          else
+          {
+            viftCounter = 0;
+          }
+        }
+        
+        break;
+      }
       case rtLinefollow:
       {
         taskLineFollow(&stat_IO);
@@ -157,8 +197,7 @@ void loop()
           stat_IO.iosLeftEngine.speed = 0;
           stat_IO.iosRightEngine.speed = 0;
           // Switch to next task if currenttask is finished
-          stat_currentTask = rtLabyrinth;
-          stat_currentTask = rtEndSentinel; // TEST!
+          stat_currentTask = rtInitial; // TEST!
           delay(100); // Try to move robot in position for labyrinth
         }
         break;
@@ -170,7 +209,7 @@ void loop()
         if (stat_IO.iosCurrentTaskIsFinished != 0)
         {
           // Switch to next task if currenttask is finished
-          stat_currentTask = rtBalls;
+          stat_currentTask = rtInitial;
         }      
         break;
       }
@@ -181,7 +220,7 @@ void loop()
          if (stat_IO.iosCurrentTaskIsFinished != 0)
         {
           // Switch to next task if currenttask is finished
-          stat_currentTask = rtSlope;
+          stat_currentTask = rtInitial;
         }    
         break;
       }
@@ -193,7 +232,7 @@ void loop()
         {
           // Switch to next task if currenttask is finished
           // All tasks finished - ToDo ???terminate??
-          stat_currentTask = rtEndSentinel;
+          stat_currentTask = rtInitial;
         }     
         break;
       }
