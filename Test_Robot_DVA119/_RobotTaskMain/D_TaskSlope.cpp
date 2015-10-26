@@ -36,6 +36,8 @@
 // #define C_ACC_WINDOW_WIDTH_Y 2
 #define C_K_R 4
 #define C_K_L 2
+#define C_K_R_ASKEW 2
+#define C_K_L_ASKEW 1
 
 #define C_SPEED_HIGH   90
 #define C_SPEED_MIDDLE 70
@@ -93,6 +95,7 @@ static int stat_ValAxisX = C_TILT_X;
 static int stat_ValAxisY = C_TILT_Y;
 
 static int stat_TargetTimeAskew = 0;
+static int stat_TargetTimeAskew1 = 0;
 
 // ============================================================================
 
@@ -395,7 +398,7 @@ int followAccelerometerAskewAndReturnIsFinished(struct ioStruct* ptr_io)
      // ptr_io->iosRightLedRed = LOW;
       
       // Om detta sker så har vi Uppåtlut och Höger motor behöver Kräm
-      int leftSpeed = C_SPEED_MEDIUM + diffX*C_K_L;
+      int leftSpeed = C_SPEED_MEDIUM + diffX*C_K_L_ASKEW;
       
       
       if (leftSpeed < 40)
@@ -413,7 +416,7 @@ int followAccelerometerAskewAndReturnIsFinished(struct ioStruct* ptr_io)
       } // else
     
       ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM*1.08 - diffX*C_K_R;
+      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM*1.08 - diffX*C_K_R_ASKEW;
    
      } // if
     else
@@ -432,7 +435,7 @@ int followAccelerometerAskewAndReturnIsFinished(struct ioStruct* ptr_io)
       ptr_io->iosLeftEngine.direction = deForward;
       ptr_io->iosLeftEngine.speed = C_SPEED_MEDIUM + diffX*C_K_L;      
       ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM*1.08 - diffX*C_K_R;
+      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM*1.08 - diffX*C_K_R_ASKEW;
     } // else
 
     ptr_io->iosDelayMS = 10;
@@ -447,7 +450,7 @@ int followAccelerometerAskewAndReturnIsFinished(struct ioStruct* ptr_io)
       // Black is found on all: Different actions depending on state and direction.
       if ( (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontLeft_2 == C_DARK_1) )
       {
-        if ( (ptr_io->iosReflAnalog_3 < C_ANALOG_DARK))
+    //    if ( (ptr_io->iosReflAnalog_3 < C_ANALOG_DARK))
         {
           isFinished = 1;
         } // if
@@ -501,7 +504,7 @@ case rsInitial3:
       ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;
       stat_RobotState = rsGoOverTheEdgeAskew1;
       stat_TargetTimeAskew = millis() + 700;
-      
+      stat_TargetTimeAskew1 = millis() + 200;
       ptr_io->iosDelayMS = 200;
      break;
 
@@ -510,7 +513,7 @@ case rsInitial3:
 ptr_io->iosLeftLedRed = HIGH;    
 ptr_io->iosLeftLedGreen = LOW;      
       strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeAskew");
-      stat_RobotState = rsGoOverTheEdgeAskew2;
+      
       if (followAccelerometerAskewAndReturnIsFinished(ptr_io) != 0)
       {
         // Reached tape - follow it
@@ -518,7 +521,10 @@ ptr_io->iosLeftLedGreen = LOW;
       } // if
       else
       {
-        ptr_io->iosDelayMS = 100;
+        if (millis() > stat_TargetTimeAskew1)
+        {
+          stat_RobotState = rsGoOverTheEdgeAskew2;
+        }    
       }
      break;
 
@@ -532,8 +538,9 @@ ptr_io->iosLeftLedGreen = LOW;
       ptr_io->iosLeftEngine.speed = 0;
       
       ptr_io->iosDelayMS = 50;
-     
+      stat_TargetTimeAskew1 = millis() + 200;  
       break;
+      
       
     case rsFollowingFirstTape:
       ptr_io->iosRightLedRed = HIGH;
