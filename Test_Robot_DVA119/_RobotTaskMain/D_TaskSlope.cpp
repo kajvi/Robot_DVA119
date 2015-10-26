@@ -46,7 +46,10 @@
 enum robotStateEnum {
   rsUnknown,
   rsInitial,
-  rsGoOverTheEdgeAskew,
+  rsInitial2,
+  rsInitial3,
+  rsGoOverTheEdgeAskew1,
+  rsGoOverTheEdgeAskew2,
   rsFollowingFirstTape,
   rsRunningWithoutTape,
   rsStopped,
@@ -89,6 +92,7 @@ static int stat_RecommendedSpeed = 0;
 static int stat_ValAxisX = C_TILT_X;
 static int stat_ValAxisY = C_TILT_Y;
 
+static int stat_TargetTimeAskew = 0;
 
 // ============================================================================
 
@@ -432,18 +436,25 @@ int followAccelerometerAskewAndReturnIsFinished(struct ioStruct* ptr_io)
     } // else
 
     ptr_io->iosDelayMS = 10;
- 
-  // Check if we have reached the black tape again.
-  // Black is found on all: Different actions depending on state and direction.
-  if ( (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontLeft_2 == C_DARK_1) )
-  {
-    if ( (ptr_io->iosReflAnalog_3 < C_ANALOG_DARK))
+
+    // Block detect of tape for some time as sesors in midair is confused with tape...
+    if (millis() > stat_TargetTimeAskew)
     {
-      isFinished = 1;
-    } // if
-  } // if
+      
 
+ 
+      // Check if we have reached the black tape again.
+      // Black is found on all: Different actions depending on state and direction.
+      if ( (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontLeft_2 == C_DARK_1) )
+      {
+        if ( (ptr_io->iosReflAnalog_3 < C_ANALOG_DARK))
+        {
+          isFinished = 1;
+        } // if
+      } // if
 
+    }
+    
   return isFinished;
   
 } // followAccelerometerAskewAndReturnIsFinished
@@ -461,23 +472,68 @@ void taskSlope(struct ioStruct* ptr_io)
       strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
       // Make start zag to left
       ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM;
+      ptr_io->iosRightEngine.speed = 0;
       ptr_io->iosLeftEngine.direction = deForward;
       ptr_io->iosLeftEngine.speed = C_SPEED_MEDIUM;
-      stat_RobotState = rsGoOverTheEdgeAskew;
-      ptr_io->iosDelayMS = 350;
+      stat_RobotState = rsInitial2;
+      
+      ptr_io->iosDelayMS = 400;
      break;
 
-    case rsGoOverTheEdgeAskew:
+    case rsInitial2:
+      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
+      // Make start zag to left
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = 0;
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = 0;
+      stat_RobotState = rsInitial3;
+      
+      ptr_io->iosDelayMS = 4000;
+     break;
+
+case rsInitial3:
+      strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
+      // Make start zag to left
+      ptr_io->iosRightEngine.direction = deForward;
+      ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_MIDDLE;
+      stat_RobotState = rsGoOverTheEdgeAskew1;
+      stat_TargetTimeAskew = millis() + 700;
+      
+      ptr_io->iosDelayMS = 200;
+     break;
+
+
+    case rsGoOverTheEdgeAskew1:
 ptr_io->iosLeftLedRed = HIGH;    
 ptr_io->iosLeftLedGreen = LOW;      
       strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeAskew");
+      stat_RobotState = rsGoOverTheEdgeAskew2;
       if (followAccelerometerAskewAndReturnIsFinished(ptr_io) != 0)
       {
         // Reached tape - follow it
         stat_RobotState = rsFollowingFirstTape;
       } // if
+      else
+      {
+        ptr_io->iosDelayMS = 100;
+      }
      break;
+
+
+    case rsGoOverTheEdgeAskew2:
+ptr_io->iosLeftLedRed = HIGH;    
+ptr_io->iosLeftLedGreen = LOW;      
+      strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeAskew");
+      stat_RobotState = rsGoOverTheEdgeAskew1;
+      ptr_io->iosRightEngine.speed = 0;
+      ptr_io->iosLeftEngine.speed = 0;
+      
+      ptr_io->iosDelayMS = 50;
+     
+      break;
       
     case rsFollowingFirstTape:
       ptr_io->iosRightLedRed = HIGH;
