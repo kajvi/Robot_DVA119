@@ -45,7 +45,8 @@ enum robotStateEnum {
   rsUnknown,
   rsInitial,
   rsGoOverTheEdgeZagLeft,
-  rsGoOverTheEdgeZagRight,
+  rsGoOverTheEdgeZagRight1,
+  rsGoOverTheEdgeZagRight2,
   rsFollowingFirstTape,
   rsRunningWithoutTape,
   rsStopped,
@@ -370,36 +371,26 @@ void taskSlope(struct ioStruct* ptr_io)
     case rsInitial:
       strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
       // Make start zag to left
-      ptr_io->iosLeftEngine.direction = deForward;
-      ptr_io->iosLeftEngine.speed = 0;
       ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM;
-      stat_RobotState = rsGoOverTheEdgeZagLeft;
-      ptr_io->iosDelayMS = 100;
+      ptr_io->iosRightEngine.speed = 0;
+      ptr_io->iosLeftEngine.direction = deForward;
+      ptr_io->iosLeftEngine.speed = C_SPEED_MEDIUM;
+      stat_RobotState = rsGoOverTheEdgeZagRight1;
+      ptr_io->iosDelayMS = 650;
      break;
 
-    case rsGoOverTheEdgeZagLeft:
+    case rsGoOverTheEdgeZagRight1:
 ptr_io->iosLeftLedRed = HIGH;    
-ptr_io->iosLeftLedGreen = LOW;    
-     strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeZagLeft");    
-      // Go left until acc tilt 
-      if (abs (ptr_io->iosAccelerometerY - 330) > 20)
-      {
-        stat_RobotState = rsGoOverTheEdgeZagRight;
-        stat_RecommendedSpeed = 0;
-
-        ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
-        ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM;
-        ptr_io->iosRightEngine.direction = deBackward;        
-       } // if;
-       else
-       {
-          ptr_io->iosRightEngine.speed = C_SPEED_LOW;
-       }
-    break;
-
-
-    case rsGoOverTheEdgeZagRight:
+ptr_io->iosLeftLedGreen = LOW;      
+        ptr_io->iosRightEngine.direction = deForward;
+        ptr_io->iosRightEngine.speed = C_SPEED_HIGH/2;
+        ptr_io->iosLeftEngine.direction = deForward;
+        ptr_io->iosLeftEngine.speed = C_SPEED_LOW/2;
+        stat_RobotState = rsGoOverTheEdgeZagRight2;
+        ptr_io->iosDelayMS = 500;
+     break;
+      
+    case rsGoOverTheEdgeZagRight2:
 ptr_io->iosLeftLedRed = LOW;    
 ptr_io->iosLeftLedGreen = HIGH;     
       // Go right until tape found i middle sensor 
@@ -407,11 +398,12 @@ ptr_io->iosLeftLedGreen = HIGH;
        strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeZagRight");
   
        // Condition below is directly activated - needs more work...
-      if (ptr_io->iosReflAnalog_3 > 900)
+      if ( (ptr_io->iosReflFrontLeft_2 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) )
       {
         stat_RobotState = rsFollowingFirstTape;
         ptr_io->iosLeftEngine.direction = deForward;
         ptr_io->iosRightEngine.direction = deForward;
+        stat_RecommendedSpeed = 0;
         ptr_io->iosLeftEngine.speed = stat_RecommendedSpeed;
         ptr_io->iosRightEngine.speed = stat_RecommendedSpeed;
        } // if;
