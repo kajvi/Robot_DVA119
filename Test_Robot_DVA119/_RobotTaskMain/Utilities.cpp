@@ -55,7 +55,7 @@ frontLCRsensorsEnum decodeFrontLCRsensors(struct ioStruct* ptr_io)
   
  // tmp = (ptr_io->iosReflFrontLeft_0 << 2) || (ptr_io->iosReflFrontCenter_1 << 1) || (ptr_io->iosReflFrontRight_2);
  // FEL ORDNING PÅ SENSORERNA! Vänster och höger förväxlat jmf labb-beskrivning!
-  tmp = (ptr_io->iosReflFrontLeft_0 << 0) | (ptr_io->iosReflFrontCenter_1 << 1) | (ptr_io->iosReflFrontRight_2 << 2);
+  tmp = (ptr_io->iosReflFrontLeft_2 << 2) | (ptr_io->iosReflFrontCenter_1 << 1) | (ptr_io->iosReflFrontRight_0 << 0);
   return (frontLCRsensorsEnum) ((~tmp & 0x7) + 1); // 0 = dfsUnknown, 1 = dfs_LCR_DarkDarkDark, Dark = 1, Light = 0!
   
 } // decodeFrontLCRsensors

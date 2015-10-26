@@ -10,7 +10,7 @@
 // History
 // 2015-10-16   Introduced
 // 2015-10-23   Added second LED (Left, old now = Right)
-//
+// 2015-10-26   Motor L R swapped
 // ============================================================================
 
 #include <Adafruit_MotorShield.h>
@@ -26,8 +26,8 @@
 
 #define C_THIS_VERSION "Main 2015-10-26"
 
-#define C_MOTOR_LEFT_1 1
-#define C_MOTOR_RIGHT_2 2
+#define C_MOTOR_RIGHT_1 1
+#define C_MOTOR_LEFT_2 2
 
 // If the line below not inside a comment, then debug printouts are made on the serial port.
 #define C_DEBUG_PRINT_ON
@@ -80,7 +80,7 @@ void setup()
   pinMode(LedRightGreenPin, OUTPUT);
   
   // Initiate robot Task to the first task: linefollow
-  stat_currentTask = rtLinefollow;
+  // stat_currentTask = rtLinefollow;
   stat_currentTask = rtSlope;
   Motors.beginMotors();   // start motors
   Sensors.beginSensors(); // start sensors
@@ -101,8 +101,8 @@ void loop()
   
 #ifdef C_DEBUG_PRINT_ON
 
-  Serial.print(millis());
-  Serial.print(" - ");
+//  Serial.print(millis());
+//  Serial.print(" - ");
 #endif
 
 /*  
@@ -128,9 +128,9 @@ void loop()
     // ================
 
   
-    stat_IO.iosReflFrontLeft_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
+    stat_IO.iosReflFrontRight_0   = Sensors.readReflect0(); // Read digital value of reflect sensor 0
     stat_IO.iosReflFrontCenter_1 = Sensors.readReflect1(); // Read digital value of reflect sensor 1
-    stat_IO.iosReflFrontRight_2  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
+    stat_IO.iosReflFrontLeft_2  = Sensors.readReflect2(); // Read digital value of reflect sensor 2
     stat_IO.iosReflAnalog_3  = Sensors.readReflect3(); // Read analog value of reflect sensor 3
 
     stat_IO.iosIRAnalog = Sensors.readIR0();  //Analog value of IR sensor
@@ -208,19 +208,19 @@ void loop()
 
     if (stat_IO.iosLeftEngine.direction == deBackward)
     {
-      Motors.runMotor(C_MOTOR_LEFT_1, BACKWARD, stat_IO.iosLeftEngine.speed);
+      Motors.runMotor(C_MOTOR_LEFT_2, BACKWARD, stat_IO.iosLeftEngine.speed);
     } // if
     if (stat_IO.iosLeftEngine.direction == deForward)
     {
-      Motors.runMotor(C_MOTOR_LEFT_1, FORWARD, stat_IO.iosLeftEngine.speed);
+      Motors.runMotor(C_MOTOR_LEFT_2, FORWARD, stat_IO.iosLeftEngine.speed);
     } // if
     if (stat_IO.iosRightEngine.direction == deBackward)
     {
-      Motors.runMotor(C_MOTOR_RIGHT_2, BACKWARD, stat_IO.iosRightEngine.speed);
+      Motors.runMotor(C_MOTOR_RIGHT_1, BACKWARD, stat_IO.iosRightEngine.speed);
     } // if
     if (stat_IO.iosRightEngine.direction == deForward)
     {
-      Motors.runMotor(C_MOTOR_RIGHT_2, FORWARD, stat_IO.iosRightEngine.speed);
+      Motors.runMotor(C_MOTOR_RIGHT_1, FORWARD, stat_IO.iosRightEngine.speed);
     } // if
 
     

@@ -38,7 +38,7 @@
 #define C_SPEED_HIGH   90
 #define C_SPEED_MIDDLE 70
 #define C_SPEED_MEDIUM 60
-#define C_SPEED_LOW    50
+#define C_SPEED_LOW    40
 
 // Possible main states for the robot at this task
 enum robotStateEnum {
@@ -99,7 +99,7 @@ void setupMotorControlFromDirectionCommand(directionCommandEnum i_directionComma
   // LEFT RIGHT CONFUSED!
   switch (i_directionCommandEnum)
   {
-    case dceTurnRight:
+    case dceTurnLeft:
       // Turn left!
       ptr_io->iosLeftEngine.direction = deBackward;
       ptr_io->iosLeftEngine.speed = C_SPEED_HIGH + 20;
@@ -114,7 +114,7 @@ void setupMotorControlFromDirectionCommand(directionCommandEnum i_directionComma
       ptr_io->iosRightEngine.speed = stat_RecommendedSpeed;
       break;
       
-   case dceTurnLeft:
+   case dceTurnRight:
       // Turn right!
       ptr_io->iosRightEngine.direction = deBackward;
       ptr_io->iosRightEngine.speed = C_SPEED_LOW;
@@ -204,7 +204,6 @@ int followTapeAndReturnIsFinished(struct ioStruct* ptr_io)
       
     case dfs_LCR_LightLightDark:
       // Black is found only on Right - turn right!
-      ptr_io->iosRightLedRed = HIGH;
       currDirCmd = dceTurnRight;
       break;
 
@@ -227,7 +226,7 @@ int followTapeAndReturnIsFinished(struct ioStruct* ptr_io)
 
 // ============================================================================
 
-int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY, struct ioStruct* ptr_io)
+int followAccelerometerStraightAndReturnIsFinished(struct ioStruct* ptr_io)
 {
   frontLCRsensorsEnum currLCRval;
   directionCommandEnum currDirCmd;
@@ -249,8 +248,8 @@ int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY,
 
    if (diffX < -C_WINDOW_X)
    {
-      ptr_io->iosRightLedGreen = HIGH;
-      ptr_io->iosRightLedRed = LOW;
+     // ptr_io->iosRightLedGreen = HIGH;
+     // ptr_io->iosRightLedRed = LOW;
       
       // Om detta sker så har vi Uppåtlut och Höger motor behöver Kräm
       int leftSpeed = C_SPEED_MEDIUM + diffX*C_K_L;
@@ -258,8 +257,8 @@ int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY,
       
       if (leftSpeed < 40)
       {
-        ptr_io->iosRightLedGreen = HIGH;
-        ptr_io->iosRightLedRed =  HIGH;
+      //  ptr_io->iosRightLedGreen = HIGH;
+      //  ptr_io->iosRightLedRed =  HIGH;
         leftSpeed = C_SPEED_LOW;
         ptr_io->iosLeftEngine.direction = deBackward;
         ptr_io->iosLeftEngine.speed = leftSpeed;
@@ -277,13 +276,13 @@ int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY,
     else
     if (diffX < C_WINDOW_X)
     {
-      ptr_io->iosRightLedGreen = LOW;
-      ptr_io->iosRightLedRed =  LOW;
+    //  ptr_io->iosRightLedGreen = LOW;
+    //  ptr_io->iosRightLedRed =  LOW;
     } // if
     else
     {
-      ptr_io->iosRightLedGreen = LOW;
-      ptr_io->iosRightLedRed =  HIGH;
+    //  ptr_io->iosRightLedGreen = LOW;
+    //  ptr_io->iosRightLedRed =  HIGH;
 
       
       // Vi har Nedåtlut och Vänster Motor behöver kräm!
@@ -296,10 +295,13 @@ int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY,
     ptr_io->iosDelayMS = 10;
  
   // Check if we have reached the black tape again.
-  currLCRval = decodeFrontLCRsensors(ptr_io);
-  if (dfs_LCR_LightLightLight != currLCRval)
+  // Black is found on all: Different actions depending on state and direction.
+  if ( (ptr_io->iosReflFrontRight_0 == C_DARK_1) &&  (ptr_io->iosReflFrontCenter_1 == C_DARK_1) && (ptr_io->iosReflFrontLeft_2 == C_DARK_1) )
   {
-    isFinished = 1;
+    if ( (ptr_io->iosReflAnalog_3 >= C_ANALOG_DARK))
+    {
+     isFinished = 1;
+    } // if
   } // if
 
 /* *********************************************
@@ -308,7 +310,7 @@ int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY,
     valAxisY = (valAxisY + Sensors.readAccY()) / 2;
   
     int diffX = valAxisX - C_TILT_X; 
-----    
+        
     if (diffX < -C_WINDOW_X)
     {
       digitalWrite(LedGreenPin, HIGH);
@@ -362,40 +364,51 @@ int followAccelerometerStraightAndReturnIsFinished(int i_AvgAccX, int i_AvgAccY,
 void taskSlope(struct ioStruct* ptr_io)
 {
   ptr_io->iosMessageInteger = ptr_io->iosAccelerometerY;
-  ptr_io->iosRightLedRed = ptr_io->iosReflFrontCenter_1;
+ // ptr_io->iosRightLedRed = ptr_io->iosReflFrontCenter_1;
   switch(stat_RobotState)
   {
     case rsInitial:
       strcpy (ptr_io->iosMessageChArr, C_THIS_TASK);
       // Make start zag to left
       ptr_io->iosLeftEngine.direction = deForward;
-      ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
+      ptr_io->iosLeftEngine.speed = 0;
       ptr_io->iosRightEngine.direction = deForward;
-      ptr_io->iosRightEngine.speed = 0;
+      ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM;
       stat_RobotState = rsGoOverTheEdgeZagLeft;
+      ptr_io->iosDelayMS = 100;
      break;
 
     case rsGoOverTheEdgeZagLeft:
+ptr_io->iosLeftLedRed = HIGH;    
+ptr_io->iosLeftLedGreen = LOW;    
      strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeZagLeft");    
       // Go left until acc tilt 
       if (abs (ptr_io->iosAccelerometerY - 330) > 20)
       {
-        ptr_io->iosLeftLedGreen = HIGH;
         stat_RobotState = rsGoOverTheEdgeZagRight;
         stat_RecommendedSpeed = 0;
-        ptr_io->iosLeftEngine.direction = deBackward;
+
         ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
-        ptr_io->iosRightEngine.speed = C_SPEED_LOW;
+        ptr_io->iosRightEngine.speed = C_SPEED_MEDIUM;
+        ptr_io->iosRightEngine.direction = deBackward;        
        } // if;
+       else
+       {
+          ptr_io->iosRightEngine.speed = C_SPEED_LOW;
+       }
     break;
 
 
     case rsGoOverTheEdgeZagRight:
+ptr_io->iosLeftLedRed = LOW;    
+ptr_io->iosLeftLedGreen = HIGH;     
       // Go right until tape found i middle sensor 
+      // iosReflAnalog_3  iosReflFrontCenter_1
        strcpy (ptr_io->iosMessageChArr, "rsGoOverTheEdgeZagRight");
-      if (ptr_io->iosReflFrontCenter_1 == C_DARK_1)
+  
+       // Condition below is directly activated - needs more work...
+      if (ptr_io->iosReflAnalog_3 > 900)
       {
-        ptr_io->iosLeftLedRed = HIGH;
         stat_RobotState = rsFollowingFirstTape;
         ptr_io->iosLeftEngine.direction = deForward;
         ptr_io->iosRightEngine.direction = deForward;
@@ -405,24 +418,27 @@ void taskSlope(struct ioStruct* ptr_io)
     break;
         
     case rsFollowingFirstTape:
+      ptr_io->iosRightLedRed = HIGH;
+      ptr_io->iosRightLedGreen = LOW;
       strcpy (ptr_io->iosMessageChArr, "rsFollowingFirstTape");
       if (abs (ptr_io->iosAccelerometerX - 335) < 10)
       {
-        ptr_io->iosLeftLedRed = HIGH;
-        stat_RecommendedSpeed = C_SPEED_LOW;
+        stat_RecommendedSpeed = C_SPEED_MIDDLE;
       } // if
       if (followTapeAndReturnIsFinished(ptr_io) != 0)
       {
         // No more tape - just go on
         stat_RobotState = rsRunningWithoutTape;
-   stat_RobotState = rsFinished;      
+    
       } // if
     break;
     
 
     case rsRunningWithoutTape:
       strcpy (ptr_io->iosMessageChArr, "rsRunningWithoutTape");
-      if (followAccelerometerStraightAndReturnIsFinished(stat_AverageX, stat_AverageY, ptr_io) != 0)
+      ptr_io->iosRightLedGreen = HIGH;
+      ptr_io->iosRightLedRed = LOW;
+      if (followAccelerometerStraightAndReturnIsFinished(ptr_io) != 0)
       {
         // Reached target - stop motors and report that task finisked
         ptr_io->iosLeftEngine.speed = 0;

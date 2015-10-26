@@ -23,6 +23,7 @@
 //= 0 om ljust, =1 om svart
 #define C_DARK_1 1
 #define C_LIGHT_0 0
+// Black 800-900, white: 50-100, upplyft: 900-1000
 #define C_ANALOG_DARK 800
 
 // Decoded front senors: Left Center, Right
@@ -72,9 +73,9 @@ struct ioStruct {
   // =======
   
   // Reflector Streams for LineFollow
-  int iosReflFrontLeft_0;
+  int iosReflFrontLeft_2;
   int iosReflFrontCenter_1;
-  int iosReflFrontRight_2;
+  int iosReflFrontRight_0;
   int iosReflAnalog_3;
 
   // Analog IR sensor
