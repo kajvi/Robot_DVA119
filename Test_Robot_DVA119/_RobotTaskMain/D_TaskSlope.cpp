@@ -27,7 +27,7 @@
 
 #define C_TILT_X 338
 #define C_TILT_Y 361
-#define C_TILT_X_ASKEW C_TILT_X + 20
+#define C_TILT_X_ASKEW C_TILT_X - 15
 
 
 #define C_WINDOW_X 0
@@ -465,7 +465,7 @@ void taskSlope(struct ioStruct* ptr_io)
       ptr_io->iosLeftEngine.direction = deForward;
       ptr_io->iosLeftEngine.speed = C_SPEED_MEDIUM;
       stat_RobotState = rsGoOverTheEdgeAskew;
-      ptr_io->iosDelayMS = 200;
+      ptr_io->iosDelayMS = 350;
      break;
 
     case rsGoOverTheEdgeAskew:
