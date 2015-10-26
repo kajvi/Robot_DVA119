@@ -46,7 +46,8 @@ enum directionCommandEnum {
     dceTurnLeft,
     dceGoStraight,
     dceTurnRight,
-    dcsStandStill
+    dcsStandStill,
+    dceGoBackwards
 };
 
 // Sets engine directions.

@@ -30,7 +30,7 @@
 #define C_MOTOR_RIGHT_2 2
 
 // If the line below not inside a comment, then debug printouts are made on the serial port.
-//#define C_DEBUG_PRINT_ON
+#define C_DEBUG_PRINT_ON
 
 // Sets the Task which the robot is solving.
 enum robotTaskEnum {
