@@ -9,7 +9,7 @@
 //
 // History
 // 2015-10-16   Introduced
-//
+// 
 //
 // ============================================================================
 
@@ -19,7 +19,7 @@
 #include "D_TaskSlope.h"
 #include "IO.h"
 
-#define C_THIS_TASK "Slope 2015-10-19"
+#define C_THIS_TASK "Slope 2015-10-26"
 
 #define C_RUN_LENGTH_IN_MS 3000
 
@@ -34,8 +34,8 @@
 #define C_ACC_WINDOW_WIDTH_Y 2
 
 #define C_SPEED_HIGH   90
-#define C_SPEED_MIDDLE 70
-#define C_SPEED_LOW    50
+#define C_SPEED_MIDDLE 50
+#define C_SPEED_LOW    0
 
 // Possible main states for the robot at this task
 enum robotStateEnum {
@@ -88,10 +88,11 @@ void setupMotorControlFromDirectionCommand(directionCommandEnum i_directionComma
 {
   // Evaluate turning command to motor parameters.
   // =============================================
-  
+
+  // LEFT RIGHT CONFUSED!
   switch (i_directionCommandEnum)
   {
-    case dceTurnLeft:
+    case dceTurnRight:
       // Turn left!
       ptr_io->iosLeftEngine.direction = deBackward;
       ptr_io->iosLeftEngine.speed = C_SPEED_LOW;
@@ -106,7 +107,7 @@ void setupMotorControlFromDirectionCommand(directionCommandEnum i_directionComma
       ptr_io->iosRightEngine.speed = C_SPEED_MIDDLE;
       break;
       
-   case dceTurnRight:
+   case dceTurnLeft:
       // Turn right!
       ptr_io->iosRightEngine.direction = deBackward;
       ptr_io->iosRightEngine.speed = C_SPEED_LOW;
@@ -355,6 +356,7 @@ void taskSlope(struct ioStruct* ptr_io)
       strcpy (ptr_io->iosMessageChArr, "rsStartCalculateAccelerometeReferenceValues");
       calcAverageAccelerometerValuesXYIsFinished(1, ptr_io); // Start a new average round with 1st param = 1
       stat_RobotState = rsCalculatingAccelerometeReferenceValues;
+      stat_RobotState = rsFollowingFirstTape;
     break;
     
     case rsCalculatingAccelerometeReferenceValues:
@@ -375,8 +377,9 @@ void taskSlope(struct ioStruct* ptr_io)
       strcpy (ptr_io->iosMessageChArr, "rsFollowingFirstTape");
       if (followTapeAndReturnIsFinished(ptr_io) != 0)
       {
-        // No more tape - stop motors and wait until start calc of average acc.
-        stat_RobotState = rsStartCalcAccelerometerAveraging;
+        // No more tape - just go on
+        stat_RobotState = rsRunningWithoutTape;
+   stat_RobotState = rsFinished;      
       } // if
     break;
 
@@ -433,6 +436,8 @@ void taskSlope(struct ioStruct* ptr_io)
 
     case rsFinished:
        strcpy (ptr_io->iosMessageChArr, "rsFinished");
+        ptr_io->iosLeftEngine.speed = 0;
+        ptr_io->iosRightEngine.speed = 0;       
        ptr_io->iosCurrentTaskIsFinished = 1; 
     break;
     

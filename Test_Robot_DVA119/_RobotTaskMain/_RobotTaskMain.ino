@@ -24,7 +24,7 @@
 #include "C_TaskBalls.h"
 #include "D_TaskSlope.h"
 
-#define C_THIS_VERSION "Main 2015-10-23"
+#define C_THIS_VERSION "Main 2015-10-26"
 
 #define C_MOTOR_LEFT_1 1
 #define C_MOTOR_RIGHT_2 2
@@ -81,7 +81,7 @@ void setup()
   
   // Initiate robot Task to the first task: linefollow
   stat_currentTask = rtLinefollow;
-  
+  stat_currentTask = rtSlope;
   Motors.beginMotors();   // start motors
   Sensors.beginSensors(); // start sensors
 
